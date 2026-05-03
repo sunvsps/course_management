@@ -40,6 +40,11 @@ async function loginWithLiff(liffId) {
 
   const idToken = liff.getIDToken();
   const accessToken = liff.getAccessToken();
+
+  if (!idToken && !accessToken) {
+    throw new Error("ไม่พบ LINE token กรุณาตรวจ LIFF scope และลองเปิดใหม่อีกครั้ง");
+  }
+
   const { token } = await api("/api/auth/liff", {
     method: "POST",
     auth: false,

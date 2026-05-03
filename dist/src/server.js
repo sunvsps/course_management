@@ -39,17 +39,24 @@ app.post("/api/auth/demo", async (_request, reply) => {
 });
 app.post("/api/auth/liff", async (request) => {
     const body = z.object({
-        idToken: z.string().min(1),
-        accessToken: z.string().optional()
+        idToken: z.string().min(1).nullable().optional(),
+        accessToken: z.string().min(1).nullable().optional()
     }).parse(request.body);
-    const idProfile = await verifyLineIdToken(body.idToken);
+    if (!body.idToken && !body.accessToken) {
+        throw new Error("LINE login requires idToken or accessToken");
+    }
+    const idProfile = body.idToken ? await verifyLineIdToken(body.idToken) : undefined;
     const accessProfile = body.accessToken ? await getLineProfile(body.accessToken) : undefined;
+    const lineUserId = idProfile?.lineUserId ?? accessProfile?.userId;
+    if (!lineUserId) {
+        throw new Error("LINE profile does not include userId");
+    }
     const profile = await upsertLineProfile({
-        lineUserId: idProfile.lineUserId,
-        displayName: accessProfile?.displayName ?? idProfile.displayName,
-        pictureUrl: accessProfile?.pictureUrl ?? idProfile.pictureUrl,
+        lineUserId,
+        displayName: accessProfile?.displayName ?? idProfile?.displayName ?? "LINE User",
+        pictureUrl: accessProfile?.pictureUrl ?? idProfile?.pictureUrl,
         statusMessage: accessProfile?.statusMessage,
-        email: idProfile.email
+        email: idProfile?.email
     });
     const token = signSession({
         lineUserId: profile.lineUserId,
