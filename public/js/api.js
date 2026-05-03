@@ -1,11 +1,15 @@
 import { getSessionToken } from "./session.js";
 
 export async function api(path, options = {}) {
-  const headers = { "content-type": "application/json" };
+  const headers = {};
   const token = getSessionToken();
 
   if (options.auth !== false && token) {
     headers.authorization = `Bearer ${token}`;
+  }
+
+  if (options.body) {
+    headers["content-type"] = "application/json";
   }
 
   const response = await fetch(path, {
