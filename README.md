@@ -22,12 +22,22 @@ http://localhost:3001
 
 สร้าง Google Sheet โดยมี tab และ header ตามนี้:
 
+### LineProfiles
+
+ข้อมูลที่ได้จาก LIFF/LINE Login จะถูก upsert ลง tab นี้อัตโนมัติหลัง login จริง
+
+```csv
+lineProfileId,lineUserId,displayName,pictureUrl,statusMessage,email,createdAt,updatedAt
+```
+
 ### Users
 
 ```csv
-lineUserId,displayName,pictureUrl,role
-demo-student,Demo Student,,STUDENT
+userId,lineProfileId,displayName,role
+student-demo,line-profile-demo,Demo Student,STUDENT
 ```
+
+ถ้ายังใช้ demo/mock แบบเดิม โค้ดยังรองรับ header เก่า `lineUserId,displayName,pictureUrl,role` อยู่
 
 ### Courses
 
@@ -71,6 +81,22 @@ att-1,enroll-demo,Demo Teacher,2026-04-28T10:05:00+07:00,1,เรียนคร
 MOCK_SHEET_ENABLED=false
 GOOGLE_SPREADSHEET_ID="..."
 ```
+
+## LIFF Profile Sync
+
+เมื่อต่อ LIFF จริง:
+
+- Frontend ส่ง `idToken` และ `accessToken` ไป backend
+- Backend verify `idToken` กับ LINE
+- Backend fetch LINE profile ด้วย `accessToken`
+- Backend upsert ข้อมูลลง tab `LineProfiles`
+- Admin ค่อยนำ `lineProfileId` จาก `LineProfiles` ไปใส่ใน tab `Users` เอง
+
+ตั้ง scope ใน LIFF/LINE Login channel:
+
+- `profile`
+- `openid`
+- `email` ถ้าต้องการเก็บ email
 
 ## Deploy
 

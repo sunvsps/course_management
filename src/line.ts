@@ -5,6 +5,14 @@ type LineVerifyResponse = {
   aud: string;
   name?: string;
   picture?: string;
+  email?: string;
+};
+
+type LineProfileResponse = {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
 };
 
 export async function verifyLineIdToken(idToken: string) {
@@ -35,6 +43,19 @@ export async function verifyLineIdToken(idToken: string) {
   return {
     lineUserId: payload.sub,
     displayName: payload.name ?? "LINE User",
-    pictureUrl: payload.picture
+    pictureUrl: payload.picture,
+    email: payload.email
   };
+}
+
+export async function getLineProfile(accessToken: string) {
+  const response = await fetch("https://api.line.me/v2/profile", {
+    headers: { authorization: `Bearer ${accessToken}` }
+  });
+
+  if (!response.ok) {
+    throw new Error("LINE profile fetch failed");
+  }
+
+  return (await response.json()) as LineProfileResponse;
 }

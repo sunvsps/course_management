@@ -4,10 +4,21 @@ import Fastify from "fastify";
 import { z } from "zod";
 import { requireAuth, signSession } from "./auth.js";
 import { config } from "./config.js";
-import { verifyLineIdToken } from "./line.js";
+import { getLineProfile, verifyLineIdToken } from "./line.js";
+import { upsertLineProfile } from "./sheets.js";
 import { getStudentDashboard } from "./student-service.js";
 
 const app = Fastify({ logger: true });
+
+app.log.info({
+  host: config.HOST,
+  port: config.PORT,
+  localDemoEnabled: config.LOCAL_DEMO_ENABLED,
+  mockSheetEnabled: config.MOCK_SHEET_ENABLED,
+  hasSpreadsheetId: Boolean(config.GOOGLE_SPREADSHEET_ID),
+  hasServiceAccountEmail: Boolean(config.GOOGLE_SERVICE_ACCOUNT_EMAIL),
+  hasPrivateKey: Boolean(config.GOOGLE_PRIVATE_KEY)
+}, "Loaded app configuration");
 
 await app.register(fastifyStatic, {
   root: path.join(process.cwd(), "public"),
@@ -36,10 +47,23 @@ app.post("/api/auth/demo", async (_request, reply) => {
 });
 
 app.post("/api/auth/liff", async (request) => {
-  const body = z.object({ idToken: z.string().min(1) }).parse(request.body);
-  const profile = await verifyLineIdToken(body.idToken);
+  const body = z.object({
+    idToken: z.string().min(1),
+    accessToken: z.string().optional()
+  }).parse(request.body);
+  const idProfile = await verifyLineIdToken(body.idToken);
+  const accessProfile = body.accessToken ? await getLineProfile(body.accessToken) : undefined;
+  const profile = await upsertLineProfile({
+    lineUserId: idProfile.lineUserId,
+    displayName: accessProfile?.displayName ?? idProfile.displayName,
+    pictureUrl: accessProfile?.pictureUrl ?? idProfile.pictureUrl,
+    statusMessage: accessProfile?.statusMessage,
+    email: idProfile.email
+  });
+
   const token = signSession({
     lineUserId: profile.lineUserId,
+    lineProfileId: profile.lineProfileId,
     displayName: profile.displayName
   });
 

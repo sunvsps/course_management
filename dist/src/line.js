@@ -22,6 +22,16 @@ export async function verifyLineIdToken(idToken) {
     return {
         lineUserId: payload.sub,
         displayName: payload.name ?? "LINE User",
-        pictureUrl: payload.picture
+        pictureUrl: payload.picture,
+        email: payload.email
     };
+}
+export async function getLineProfile(accessToken) {
+    const response = await fetch("https://api.line.me/v2/profile", {
+        headers: { authorization: `Bearer ${accessToken}` }
+    });
+    if (!response.ok) {
+        throw new Error("LINE profile fetch failed");
+    }
+    return (await response.json());
 }

@@ -1,13 +1,21 @@
 import "dotenv/config";
 import { z } from "zod";
 
+const envBoolean = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const normalized = value.trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(normalized)) return true;
+  if (["false", "0", "no", "off", ""].includes(normalized)) return false;
+  return value;
+}, z.boolean());
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   HOST: z.string().default("0.0.0.0").transform((value) => value.trim() || "0.0.0.0"),
   APP_BASE_URL: z.string().url().default("http://localhost:3001"),
   SESSION_SECRET: z.string().min(24),
-  LOCAL_DEMO_ENABLED: z.coerce.boolean().default(false),
-  MOCK_SHEET_ENABLED: z.coerce.boolean().default(false),
+  LOCAL_DEMO_ENABLED: envBoolean.default(false),
+  MOCK_SHEET_ENABLED: envBoolean.default(false),
   LINE_LOGIN_CHANNEL_ID: z.string().default(""),
   LIFF_ID: z.string().default(""),
   GOOGLE_SPREADSHEET_ID: z.string().default(""),

@@ -1,5 +1,16 @@
+export const mockLineProfiles = [
+    {
+        lineProfileId: "line-profile-demo",
+        lineUserId: "demo-student",
+        displayName: "Demo Student",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    }
+];
 export const mockUsers = [
     {
+        userId: "student-demo",
+        lineProfileId: "line-profile-demo",
         lineUserId: "demo-student",
         displayName: "Demo Student",
         role: "STUDENT"

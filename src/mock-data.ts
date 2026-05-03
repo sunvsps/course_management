@@ -1,7 +1,19 @@
-import type { AttendanceRow, CourseRow, EnrollmentRow, LessonRow, UserRow } from "./types.js";
+import type { AttendanceRow, CourseRow, EnrollmentRow, LessonRow, LineProfileRow, UserRow } from "./types.js";
+
+export const mockLineProfiles: LineProfileRow[] = [
+  {
+    lineProfileId: "line-profile-demo",
+    lineUserId: "demo-student",
+    displayName: "Demo Student",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
 
 export const mockUsers: UserRow[] = [
   {
+    userId: "student-demo",
+    lineProfileId: "line-profile-demo",
     lineUserId: "demo-student",
     displayName: "Demo Student",
     role: "STUDENT"

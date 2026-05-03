@@ -39,10 +39,11 @@ async function loginWithLiff(liffId) {
   }
 
   const idToken = liff.getIDToken();
+  const accessToken = liff.getAccessToken();
   const { token } = await api("/api/auth/liff", {
     method: "POST",
     auth: false,
-    body: { idToken }
+    body: { idToken, accessToken }
   });
 
   setSessionToken(token);
