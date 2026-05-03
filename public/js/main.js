@@ -8,6 +8,8 @@ document.getElementById("logoutButton").addEventListener("click", () => {
   window.location.reload();
 });
 
+clearSessionFromQuery();
+
 main().catch((error) => {
   document.getElementById("loadingView").textContent = "โหลดข้อมูลไม่สำเร็จ";
   showToast(error.message || "เกิดข้อผิดพลาด");
@@ -52,4 +54,13 @@ async function loginWithLiff(liffId) {
   });
 
   setSessionToken(token);
+}
+
+function clearSessionFromQuery() {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("clear") !== "1") return;
+
+  clearSessionToken();
+  url.searchParams.delete("clear");
+  window.location.replace(url.toString());
 }
