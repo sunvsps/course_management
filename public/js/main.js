@@ -26,7 +26,7 @@ async function main() {
   }
 
   const dashboard = await api("/api/me/dashboard");
-  document.getElementById("logoutButton").classList.remove("hidden");
+  // document.getElementById("logoutButton").classList.remove("hidden");
   renderStudentDashboard(dashboard);
 }
 

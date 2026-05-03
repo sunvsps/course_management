@@ -6,7 +6,7 @@ export function renderStudentDashboard(dashboard) {
 
   renderProfile(dashboard.user);
   renderBalanceCards(dashboard.enrollments);
-  renderNextLessons(dashboard.enrollments);
+  // renderNextLessons(dashboard.enrollments);
   renderAttendanceHistory(dashboard.enrollments);
 }
 
