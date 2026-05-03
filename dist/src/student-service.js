@@ -7,7 +7,9 @@ export async function getStudentDashboard(lineUserId) {
         throw new Error("Student not found");
     }
     const enrollments = db.enrollments
-        .filter((enrollment) => enrollment.lineUserId === lineUserId || Boolean(lineProfile && enrollment.lineProfileId === lineProfile.lineProfileId))
+        .filter((enrollment) => Boolean(user.userId && enrollment.userId === user.userId) ||
+        enrollment.lineUserId === lineUserId ||
+        Boolean(lineProfile && enrollment.lineProfileId === lineProfile.lineProfileId))
         .map((enrollment) => {
         const course = db.courses.find((item) => item.courseId === enrollment.courseId);
         const lessons = db.lessons

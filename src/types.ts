@@ -27,11 +27,13 @@ export type UserRow = {
 export type CourseRow = {
   courseId: string;
   name: string;
+  courseType: "CLASS" | "HOUR";
   totalClasses: number;
 };
 
 export type EnrollmentRow = {
   enrollmentId: string;
+  userId?: string;
   lineUserId?: string;
   lineProfileId?: string;
   courseId: string;

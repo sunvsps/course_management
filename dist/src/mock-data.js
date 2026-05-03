@@ -20,12 +20,20 @@ export const mockCourses = [
     {
         courseId: "course-10",
         name: "Private Course 10 Classes",
+        courseType: "CLASS",
+        totalClasses: 10
+    },
+    {
+        courseId: "hour-10",
+        name: "Private Course 10 Hours",
+        courseType: "HOUR",
         totalClasses: 10
     }
 ];
 export const mockEnrollments = [
     {
         enrollmentId: "enroll-demo",
+        userId: "student-demo",
         lineUserId: "demo-student",
         courseId: "course-10",
         purchasedClasses: 10,

@@ -227,6 +227,7 @@ function toCourse(row: Record<string, string>): CourseRow {
   return {
     courseId: row.courseId,
     name: row.name,
+    courseType: normalizeCourseType(row.courseType),
     totalClasses: Number(row.totalClasses)
   };
 }
@@ -234,6 +235,7 @@ function toCourse(row: Record<string, string>): CourseRow {
 function toEnrollment(row: Record<string, string>): EnrollmentRow {
   return {
     enrollmentId: row.enrollmentId,
+    userId: row.userId,
     lineUserId: row.lineUserId,
     lineProfileId: row.lineProfileId,
     courseId: row.courseId,
@@ -280,6 +282,11 @@ function toAttendance(row: Record<string, string>): AttendanceRow {
 
 function normalizeRole(role: string): UserRow["role"] {
   return role === "INSTRUCTOR" || role === "ADMIN" ? role : "STUDENT";
+}
+
+function normalizeCourseType(courseType: string): CourseRow["courseType"] {
+  const normalized = courseType.trim().toUpperCase();
+  return normalized === "HOUR" || normalized === "HOURS" || normalized === "รายชม." ? "HOUR" : "CLASS";
 }
 
 function normalizeStatus(status: string): EnrollmentRow["status"] {

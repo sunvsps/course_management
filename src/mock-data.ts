@@ -24,6 +24,13 @@ export const mockCourses: CourseRow[] = [
   {
     courseId: "course-10",
     name: "Private Course 10 Classes",
+    courseType: "CLASS",
+    totalClasses: 10
+  },
+  {
+    courseId: "hour-10",
+    name: "Private Course 10 Hours",
+    courseType: "HOUR",
     totalClasses: 10
   }
 ];
@@ -31,6 +38,7 @@ export const mockCourses: CourseRow[] = [
 export const mockEnrollments: EnrollmentRow[] = [
   {
     enrollmentId: "enroll-demo",
+    userId: "student-demo",
     lineUserId: "demo-student",
     courseId: "course-10",
     purchasedClasses: 10,

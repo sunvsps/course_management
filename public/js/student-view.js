@@ -25,8 +25,8 @@ function renderBalanceCards(enrollments) {
   document.getElementById("balanceCards").innerHTML = enrollments.map((enrollment) => `
     <article class="card">
       <strong>${escapeHtml(enrollment.course?.name || "-")}</strong>
-      <div class="balance">${formatNumber(enrollment.remainingClasses)} ครั้ง</div>
-      <p class="muted">จากทั้งหมด ${formatNumber(enrollment.purchasedClasses)} ครั้ง</p>
+      <div class="balance">${formatNumber(enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</div>
+      <p class="muted">จากทั้งหมด ${formatNumber(enrollment.purchasedClasses)} ${courseUnit(enrollment.course)}</p>
     </article>
   `).join("") || empty("ยังไม่มีคอร์ส");
 }
@@ -74,7 +74,7 @@ function renderAttendanceHistory(enrollments) {
               <td data-label="เวลา">${formatTime(attendance.checkedInAt)}</td>
               <td data-label="คอร์ส">${escapeHtml(enrollment.course?.name || "-")}</td>
               <td data-label="ผู้สอน">${escapeHtml(attendance.instructorName)}</td>
-              <td data-label="จำนวน" class="numeric">${formatNumber(attendance.classesUsed)} ครั้ง</td>
+              <td data-label="จำนวน" class="numeric">${formatNumber(attendance.classesUsed)} ${courseUnit(enrollment.course)}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -85,4 +85,8 @@ function renderAttendanceHistory(enrollments) {
 
 function empty(text) {
   return `<article class="row muted">${escapeHtml(text)}</article>`;
+}
+
+function courseUnit(course) {
+  return course?.courseType === "HOUR" ? "ชม." : "ครั้ง";
 }

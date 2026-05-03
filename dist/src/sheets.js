@@ -175,12 +175,14 @@ function toCourse(row) {
     return {
         courseId: row.courseId,
         name: row.name,
+        courseType: normalizeCourseType(row.courseType),
         totalClasses: Number(row.totalClasses)
     };
 }
 function toEnrollment(row) {
     return {
         enrollmentId: row.enrollmentId,
+        userId: row.userId,
         lineUserId: row.lineUserId,
         lineProfileId: row.lineProfileId,
         courseId: row.courseId,
@@ -223,6 +225,10 @@ function toAttendance(row) {
 }
 function normalizeRole(role) {
     return role === "INSTRUCTOR" || role === "ADMIN" ? role : "STUDENT";
+}
+function normalizeCourseType(courseType) {
+    const normalized = courseType.trim().toUpperCase();
+    return normalized === "HOUR" || normalized === "HOURS" || normalized === "รายชม." ? "HOUR" : "CLASS";
 }
 function normalizeStatus(status) {
     if (status === "PAUSED" || status === "COMPLETED" || status === "CANCELLED")

@@ -42,16 +42,24 @@ student-demo,line-profile-demo,Demo Student,STUDENT
 ### Courses
 
 ```csv
-courseId,name,totalClasses
-course-10,Private Course 10 Classes,10
+courseId,name,courseType,totalClasses
+course-10,Private Course 10 Classes,CLASS,10
+hour-10,Private Course 10 Hours,HOUR,10
 ```
+
+`courseType` ใช้กำหนดหน่วยที่แสดงบนหน้านักเรียน:
+
+- `CLASS` = แสดงเป็น `ครั้ง`
+- `HOUR` = แสดงเป็น `ชม.`
 
 ### Enrollments
 
 ```csv
-enrollmentId,lineUserId,courseId,purchasedClasses,remainingClasses,status
-enroll-demo,demo-student,course-10,10,5,ACTIVE
+enrollmentId,userId,courseId,purchasedClasses,remainingClasses,status
+enroll-demo,student-demo,course-10,10,5,ACTIVE
 ```
+
+ระบบจะใช้ `userId` เป็นหลักในการผูก enrollment กับ tab `Users`
 
 ### Lessons
 
