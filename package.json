@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/src/server.js",
     "check": "tsc --noEmit",
-    "sheets:check": "tsx src/check-sheets.ts"
+    "sheets:check": "tsx src/check-sheets.ts",
+    "sheets:validate": "tsx src/validate-sheets.ts",
+    "dashboard:check": "tsx src/check-dashboard.ts"
   },
   "dependencies": {
     "@fastify/static": "^8.0.2",
