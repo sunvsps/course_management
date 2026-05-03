@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Student Classes</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">LINE Student Card</p>
+          <h1>ข้อมูลการเรียน</h1>
+        </div>
+        <button id="logoutButton" class="secondary hidden" type="button">ออกจากระบบ</button>
+      </section>
+
+      <section id="loadingView" class="status">กำลังโหลดข้อมูล...</section>
+
+      <section id="studentView" class="hidden">
+        <div id="profile" class="profile"></div>
+        <div id="balanceCards" class="grid"></div>
+
+        <h2>ตารางเรียนถัดไป</h2>
+        <div id="nextLessons" class="list"></div>
+
+        <h2>ประวัติการเข้าเรียน</h2>
+        <div id="attendanceHistory"></div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>
