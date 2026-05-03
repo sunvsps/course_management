@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
-  HOST: z.string().default(process.env.RENDER ? "0.0.0.0" : "127.0.0.1"),
+  HOST: z.string().default("0.0.0.0").transform((value) => value.trim() || "0.0.0.0"),
   APP_BASE_URL: z.string().url().default("http://localhost:3001"),
   SESSION_SECRET: z.string().min(24),
   LOCAL_DEMO_ENABLED: z.coerce.boolean().default(false),
