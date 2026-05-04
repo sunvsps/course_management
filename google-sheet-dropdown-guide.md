@@ -13,10 +13,11 @@ userId,lineProfileId,displayName,birthDate,role
 แนะนำให้เพิ่ม column ใน tab `Enrollments` เป็นแบบนี้:
 
 ```csv
-enrollmentId,userDisplayName,userId,courseName,courseId,purchasedClasses,remainingClasses,status
+enrollmentId,userDisplayName,userId,courseName,courseId,purchasedClasses,status
 ```
 
 คุณครูเลือก `userDisplayName` และ `courseName` จาก dropdown แล้ว script จะเติม `userId` และ `courseId` ให้อัตโนมัติ
+ถ้า `purchasedClasses` ว่าง ระบบจะใช้จำนวนจาก `Courses.totalClasses` แทน ส่วนจำนวนคงเหลือระบบคำนวณจากประวัติใน `Attendances` อัตโนมัติ
 
 แนะนำให้เพิ่ม column ใน tab `Attendances` เป็นแบบนี้:
 
@@ -64,12 +65,12 @@ Field ที่เป็น ID เช่น `userId`, `courseId`, `enrollmentId`
 4. ระบบจะเติม `userId` ให้เอง
 5. เลือกชื่อคอร์สใน `courseName`
 6. ระบบจะเติม `courseId` ให้เอง
-7. ใส่ `purchasedClasses`, `remainingClasses`, `status`
+7. ใส่ `purchasedClasses` ถ้าจำนวนที่ซื้อไม่เท่ากับคอร์สหลัก แล้วเลือก `status`
 
 ตัวอย่าง:
 
 ```csv
-enr-001,Sun Earth Student,user-001,Private Course 10 Classes,course-001,10,10,ACTIVE
+enr-001,Sun Earth Student,user-001,Private Course 10 Classes,course-001,,ACTIVE
 ```
 
 ## วิธีใช้งานใน Attendances

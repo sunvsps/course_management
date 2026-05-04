@@ -2,6 +2,7 @@ import path from "node:path";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import { config } from "./config.js";
+import { adminRoutes } from "./routes/admin-routes.js";
 import { authRoutes } from "./routes/auth-routes.js";
 import { configRoutes } from "./routes/config-routes.js";
 import { healthRoutes } from "./routes/health-routes.js";
@@ -25,9 +26,26 @@ export async function buildApp() {
     prefix: "/"
   });
 
+  app.get("/student", async (_request, reply) => {
+    return reply.sendFile("index.html");
+  });
+
+  app.get("/student/", async (_request, reply) => {
+    return reply.sendFile("index.html");
+  });
+
+  app.get("/admin", async (_request, reply) => {
+    return reply.sendFile("admin.html");
+  });
+
+  app.get("/admin/", async (_request, reply) => {
+    return reply.sendFile("admin.html");
+  });
+
   await app.register(healthRoutes);
   await app.register(configRoutes);
   await app.register(authRoutes, { prefix: "/api/auth" });
+  await app.register(adminRoutes, { prefix: "/api/admin" });
   await app.register(studentRoutes, { prefix: "/api" });
 
   return app;

@@ -1,4 +1,6 @@
 import { loadSheetDatabase } from "./sheets.js";
+import type { SheetDatabase } from "./sheets.js";
+import type { UserRow } from "./types.js";
 
 export async function getStudentDashboard(userId: string) {
   const db = await loadSheetDatabase();
@@ -8,6 +10,20 @@ export async function getStudentDashboard(userId: string) {
     throw new Error("Student not found");
   }
 
+  const relatedStudents = findRelatedStudents(db.users, user);
+  const students = relatedStudents.map((student) => buildStudentDashboard(db, student));
+
+  if (students.length > 1) {
+    return {
+      user: toPublicUser(user),
+      students
+    };
+  }
+
+  return buildStudentDashboard(db, user);
+}
+
+function buildStudentDashboard(db: SheetDatabase, user: UserRow) {
   const enrollments = db.enrollments
     .filter((enrollment) => enrollment.userId === user.userId)
     .map((enrollment) => {
@@ -18,9 +34,13 @@ export async function getStudentDashboard(userId: string) {
       const attendances = db.attendances
         .filter((attendance) => attendance.enrollmentId === enrollment.enrollmentId)
         .sort((a, b) => new Date(b.checkedInAt).getTime() - new Date(a.checkedInAt).getTime());
+      const purchasedClasses = resolvePurchasedClasses(enrollment.purchasedClasses, course?.totalClasses);
+      const remainingClasses = resolveRemainingClasses(purchasedClasses, attendances);
 
       return {
         ...enrollment,
+        purchasedClasses,
+        remainingClasses,
         course,
         lessons,
         attendances,
@@ -34,14 +54,47 @@ export async function getStudentDashboard(userId: string) {
     });
 
   return {
-    user: {
-      userId: user.userId,
-      displayName: user.displayName,
-      pictureUrl: user.pictureUrl,
-      birthDate: user.birthDate,
-      role: user.role
-    },
+    user: toPublicUser(user),
     enrollments
+  };
+}
+
+function resolvePurchasedClasses(enrollmentPurchasedClasses: number, courseTotalClasses?: number) {
+  if (Number.isFinite(enrollmentPurchasedClasses) && enrollmentPurchasedClasses > 0) {
+    return enrollmentPurchasedClasses;
+  }
+
+  return Number.isFinite(courseTotalClasses) ? courseTotalClasses ?? 0 : 0;
+}
+
+function resolveRemainingClasses(
+  purchasedClasses: number,
+  attendances: Array<{ classesUsed: number }>
+) {
+  const usedClasses = attendances.reduce((sum, attendance) => {
+    return sum + (Number.isFinite(attendance.classesUsed) ? attendance.classesUsed : 0);
+  }, 0);
+
+  return Math.max(purchasedClasses - usedClasses, 0);
+}
+
+function findRelatedStudents(users: UserRow[], user: UserRow) {
+  if (!user.lineProfileId) return [user];
+
+  const relatedStudents = users
+    .filter((item) => item.role === "STUDENT" && item.lineProfileId === user.lineProfileId && item.userId)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
+
+  return relatedStudents.length > 0 ? relatedStudents : [user];
+}
+
+function toPublicUser(user: UserRow) {
+  return {
+    userId: user.userId,
+    displayName: user.displayName,
+    pictureUrl: user.pictureUrl,
+    birthDate: user.birthDate,
+    role: user.role
   };
 }
 

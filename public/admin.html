@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin | Course Management</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="adminShell">
+      <section id="adminLogin" class="loginPanel">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>เข้าสู่ระบบหลังบ้าน</h1>
+        </div>
+        <form id="adminLoginForm" class="adminForm">
+          <label>
+            Username
+            <input name="username" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button type="submit">เข้าสู่ระบบ</button>
+        </form>
+      </section>
+
+      <section id="adminApp" class="hidden">
+        <section class="adminTopbar">
+          <div>
+            <p class="eyebrow">Course Management</p>
+            <h1>หลังบ้าน</h1>
+          </div>
+          <button id="adminLogoutButton" class="secondary" type="button">ออกจากระบบ</button>
+        </section>
+
+        <nav id="adminNav" class="adminNav" aria-label="Admin menu"></nav>
+        <section id="adminContent" class="adminContent"></section>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+    <script type="module" src="/js/admin.js"></script>
+  </body>
+</html>

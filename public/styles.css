@@ -73,6 +73,14 @@ h2 {
   margin-bottom: 12px;
 }
 
+.profile.studentListProfile {
+  display: block;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
 .avatar {
   width: 44px;
   height: 44px;
@@ -114,26 +122,73 @@ h2 {
 
 .studentOptions {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  margin-top: 12px;
+}
+
+.studentOptionShell {
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.04);
+  overflow: hidden;
+}
+
+.studentOptionShell.selected {
+  border-color: #0f8b5f;
+  box-shadow: 0 0 0 2px rgba(15, 139, 95, 0.12);
 }
 
 .studentOption {
-  min-height: 44px;
+  width: 100%;
+  min-height: 76px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border: 1px solid #dde5ea;
+  gap: 14px;
   background: #ffffff;
   color: #17202a;
-  padding: 8px 10px;
+  padding: 14px 20px;
   text-align: left;
 }
 
 .studentOption.selected {
-  border-color: #0f8b5f;
-  box-shadow: 0 0 0 2px rgba(15, 139, 95, 0.12);
+  background: #ffffff;
+}
+
+.studentOption .avatar.small {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+
+.studentOptionName {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.studentOptionName strong {
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.studentInlineContent {
+  display: grid;
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.studentInlineContent h2 {
+  margin: 4px 0 0;
+}
+
+.studentInlineContent .courseDetail,
+.studentInlineContent .historyPanel {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .grid {
@@ -368,6 +423,216 @@ button.secondary {
   border: 1px solid #ccd6dd;
 }
 
+.adminShell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.loginPanel,
+.adminPanel,
+.adminPageHeader,
+.adminStat {
+  background: #ffffff;
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.04);
+}
+
+.loginPanel {
+  display: grid;
+  gap: 18px;
+  width: min(420px, 100%);
+  margin: 56px auto;
+  padding: 20px;
+}
+
+.adminTopbar,
+.adminPanelHeader,
+.adminPageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.adminTopbar {
+  padding: 18px 0 12px;
+}
+
+.adminNav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 0 14px;
+}
+
+.adminNavButton {
+  flex: 0 0 auto;
+  background: #ffffff;
+  color: #17202a;
+  border: 1px solid #ccd6dd;
+}
+
+.adminNavButton.active {
+  background: #17202a;
+  color: #ffffff;
+  border-color: #17202a;
+}
+
+.adminContent {
+  display: grid;
+  gap: 14px;
+}
+
+.adminStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.adminStat {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.adminStat span {
+  color: #6c7a89;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.adminStat strong {
+  color: #0f8b5f;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.adminPanel,
+.adminPageHeader {
+  padding: 14px;
+}
+
+.adminPanel h2,
+.adminPageHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.adminActionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.adminActionButton {
+  justify-content: flex-start;
+  min-height: 48px;
+  text-align: left;
+}
+
+.adminForm {
+  display: grid;
+  gap: 12px;
+}
+
+.adminFormGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.adminForm label {
+  display: grid;
+  gap: 6px;
+  color: #4d5965;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.adminForm input,
+.adminForm select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #cfd9e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17202a;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.adminForm input[readonly] {
+  color: #69727d;
+  background: #f4f6f7;
+}
+
+.adminFormWide {
+  grid-column: span 2;
+}
+
+.adminFormActions {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adminTableWrap {
+  overflow-x: auto;
+}
+
+.adminTable {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.adminTable th,
+.adminTable td {
+  border-bottom: 1px solid #e4eaef;
+  padding: 11px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.adminTable th {
+  color: #5d6d7e;
+  background: #f3f6f8;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.adminTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.rowActionGroup {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.iconTextButton,
+.dangerButton {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.dangerButton {
+  color: #9f2d2d;
+  border-color: #efc8c8;
+}
+
+.adminEmpty {
+  border: 1px dashed #cfd9e1;
+  border-radius: 8px;
+  color: #6c7a89;
+  padding: 18px;
+  text-align: center;
+}
+
 .tableWrap {
   overflow-x: auto;
   border: 1px solid #dde5ea;
@@ -504,6 +769,33 @@ button.secondary {
 @media (max-width: 640px) {
   .shell {
     padding: 14px;
+  }
+
+  .adminShell {
+    padding: 14px;
+  }
+
+  .adminTopbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .adminStats,
+  .adminFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .adminFormWide {
+    grid-column: auto;
+  }
+
+  .adminPageHeader,
+  .adminPanelHeader {
+    flex-direction: column;
+  }
+
+  .adminTable {
+    min-width: 680px;
   }
 
   .topbar {

@@ -1,5 +1,6 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { z } from "zod";
+dotenv.config({ path: process.env.APP_ENV ? `.env.${process.env.APP_ENV}` : ".env" });
 const envBoolean = z.preprocess((value) => {
     if (typeof value !== "string")
         return value;
@@ -15,6 +16,8 @@ const envSchema = z.object({
     HOST: z.string().default("0.0.0.0").transform((value) => value.trim() || "0.0.0.0"),
     APP_BASE_URL: z.string().url().default("http://localhost:3001"),
     SESSION_SECRET: z.string().min(24),
+    ADMIN_USERNAME: z.string().default(""),
+    ADMIN_PASSWORD: z.string().default(""),
     LOCAL_DEMO_ENABLED: envBoolean.default(false),
     MOCK_SHEET_ENABLED: envBoolean.default(false),
     DEMO_USER_ID: z.string().default(""),

@@ -1,6 +1,7 @@
 export type SessionUser = {
   userId: string;
   displayName: string;
+  role?: "STUDENT" | "INSTRUCTOR" | "ADMIN";
 };
 
 export type LineProfileRow = {

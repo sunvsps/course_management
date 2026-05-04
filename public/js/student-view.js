@@ -5,7 +5,6 @@ let selectedStudentId = null;
 let currentStudents = [];
 let currentEnrollments = [];
 let isCourseDetailOpen = false;
-let isStudentSelectorOpen = false;
 let isHistoryOpen = false;
 let historyPage = 1;
 const historyPageSize = 10;
@@ -15,7 +14,7 @@ export function renderStudentDashboard(dashboard) {
   document.getElementById("studentView").classList.remove("hidden");
 
   currentStudents = normalizeStudents(dashboard);
-  selectedStudentId = currentStudents.length === 1 ? currentStudents[0].user.userId : null;
+  selectedStudentId = selectDefaultStudentId(dashboard, currentStudents);
   renderProfile();
   renderSelectedStudent();
 }
@@ -24,6 +23,7 @@ function renderProfile() {
   const profile = document.getElementById("profile");
 
   if (currentStudents.length <= 1) {
+    profile.classList.remove("studentListProfile");
     const user = currentStudents[0]?.user;
     const initial = escapeHtml(user?.displayName?.charAt(0) || "S");
     profile.innerHTML = `
@@ -36,40 +36,34 @@ function renderProfile() {
     return;
   }
 
-  const selectedStudent = currentStudents.find((student) => student.user.userId === selectedStudentId);
+  profile.classList.add("studentListProfile");
   profile.innerHTML = `
-    <button class="studentSelectorToggle" type="button" aria-expanded="${isStudentSelectorOpen ? "true" : "false"}">
-      <span>
-        <span class="eyebrow">เลือกผู้เรียน</span>
-        <strong>${escapeHtml(selectedStudent?.user.displayName || "เลือกนักเรียน")}</strong>
-        ${studentAgeText(selectedStudent?.user) ? `<span class="muted">${escapeHtml(studentAgeText(selectedStudent.user))}</span>` : ""}
-      </span>
-      <span class="toggleText">${isStudentSelectorOpen ? "ซ่อน" : "เลือก"}</span>
-    </button>
-    ${isStudentSelectorOpen ? `
-      <div class="studentOptions">
-        ${currentStudents.map((student) => `
+    <div class="studentOptions">
+      ${currentStudents.map((student) => `
+        <article class="studentOptionShell ${student.user.userId === selectedStudentId ? "selected" : ""}">
           <button class="studentOption ${student.user.userId === selectedStudentId ? "selected" : ""}" type="button" data-student-id="${escapeHtml(student.user.userId)}">
             <span class="avatar small">${escapeHtml(student.user.displayName.charAt(0) || "S")}</span>
-            <span>
-              <span>${escapeHtml(student.user.displayName)}</span>
+            <span class="studentOptionName">
+              <strong>${escapeHtml(student.user.displayName)}</strong>
               ${studentAgeText(student.user) ? `<span class="muted">${escapeHtml(studentAgeText(student.user))}</span>` : ""}
             </span>
           </button>
-        `).join("")}
-      </div>
-    ` : ""}
+          ${student.user.userId === selectedStudentId ? `
+            <div class="studentInlineContent">
+              <h2>คอร์สของฉัน</h2>
+              <div id="inlineBalanceCards" class="courseRail"></div>
+              <section id="inlineCourseDetail" class="courseDetail hidden"></section>
+              <div id="inlineAttendanceHistory"></div>
+            </div>
+          ` : ""}
+        </article>
+      `).join("")}
+    </div>
   `;
-
-  profile.querySelector(".studentSelectorToggle").onclick = () => {
-    isStudentSelectorOpen = !isStudentSelectorOpen;
-    renderProfile();
-  };
 
   profile.querySelectorAll("[data-student-id]").forEach((button) => {
     button.onclick = () => {
       selectedStudentId = button.dataset.studentId;
-      isStudentSelectorOpen = false;
       isCourseDetailOpen = false;
       isHistoryOpen = false;
       historyPage = 1;
@@ -81,13 +75,15 @@ function renderProfile() {
 
 function renderSelectedStudent() {
   const selectedStudent = currentStudents.find((student) => student.user.userId === selectedStudentId);
+  updateGlobalCourseVisibility();
 
   if (!selectedStudent) {
     currentEnrollments = [];
     selectedEnrollmentId = null;
-    document.getElementById("balanceCards").innerHTML = empty("กรุณาเลือกนักเรียนเพื่อดูข้อมูลการเรียน");
-    document.getElementById("courseDetail").classList.add("hidden");
-    document.getElementById("attendanceHistory").innerHTML = "";
+    const elements = getCourseElements();
+    elements.balanceCards.innerHTML = empty("กรุณาเลือกนักเรียนเพื่อดูข้อมูลการเรียน");
+    elements.courseDetail.classList.add("hidden");
+    elements.attendanceHistory.innerHTML = "";
     return;
   }
 
@@ -98,7 +94,7 @@ function renderSelectedStudent() {
 }
 
 function renderBalanceCards(enrollments) {
-  const rail = document.getElementById("balanceCards");
+  const rail = getCourseElements().balanceCards;
   rail.innerHTML = enrollments.map((enrollment) => `
     <button class="courseCard ${enrollment.enrollmentId === selectedEnrollmentId ? "selected" : ""}" type="button" data-enrollment-id="${escapeHtml(enrollment.enrollmentId)}">
       <span class="courseCardTop">
@@ -128,11 +124,11 @@ function handleCourseSelect(event) {
 
 function renderSelectedCourse() {
   const enrollment = currentEnrollments.find((item) => item.enrollmentId === selectedEnrollmentId);
-  const detail = document.getElementById("courseDetail");
+  const { courseDetail: detail, attendanceHistory } = getCourseElements();
 
   if (!enrollment) {
     detail.classList.add("hidden");
-    document.getElementById("attendanceHistory").innerHTML = empty("ยังไม่มีคอร์ส");
+    attendanceHistory.innerHTML = empty("ยังไม่มีคอร์ส");
     return;
   }
 
@@ -178,7 +174,7 @@ function renderSelectedCourse() {
 function renderNextLessons(enrollment) {
   if (enrollment.lessons.length === 0) return;
 
-  document.getElementById("courseDetail").insertAdjacentHTML("beforeend", `
+  getCourseElements().courseDetail.insertAdjacentHTML("beforeend", `
     <div class="nextLesson">
       <div class="rowTitle">ตารางเรียนถัดไป</div>
       ${enrollment.lessons.map((lesson) => `
@@ -192,7 +188,7 @@ function renderAttendanceHistory(enrollment) {
   const rows = enrollment.attendances
     .map((attendance) => ({ enrollment, attendance }))
     .sort((a, b) => new Date(b.attendance.checkedInAt).getTime() - new Date(a.attendance.checkedInAt).getTime());
-  const history = document.getElementById("attendanceHistory");
+  const history = getCourseElements().attendanceHistory;
   const totalPages = Math.max(1, Math.ceil(rows.length / historyPageSize));
   historyPage = Math.min(Math.max(historyPage, 1), totalPages);
   const start = (historyPage - 1) * historyPageSize;
@@ -269,8 +265,39 @@ function courseUnit(course) {
   return course?.courseType === "HOUR" ? "ชม." : "ครั้ง";
 }
 
+function getCourseElements() {
+  if (currentStudents.length > 1) {
+    return {
+      balanceCards: document.getElementById("inlineBalanceCards"),
+      courseDetail: document.getElementById("inlineCourseDetail"),
+      attendanceHistory: document.getElementById("inlineAttendanceHistory")
+    };
+  }
+
+  return {
+    balanceCards: document.getElementById("balanceCards"),
+    courseDetail: document.getElementById("courseDetail"),
+    attendanceHistory: document.getElementById("attendanceHistory")
+  };
+}
+
+function updateGlobalCourseVisibility() {
+  const shouldHideGlobalCourse = currentStudents.length > 1;
+  document.getElementById("courseSectionTitle").classList.toggle("hidden", shouldHideGlobalCourse);
+  document.getElementById("balanceCards").classList.toggle("hidden", shouldHideGlobalCourse);
+  document.getElementById("courseDetail").classList.toggle("hidden", shouldHideGlobalCourse);
+  document.getElementById("attendanceHistory").classList.toggle("hidden", shouldHideGlobalCourse);
+}
+
 function selectDefaultEnrollmentId(enrollments) {
   return enrollments[0]?.enrollmentId ?? null;
+}
+
+function selectDefaultStudentId(dashboard, students) {
+  if (students.length === 0) return null;
+  const sessionUserId = dashboard.user?.userId;
+  const sessionStudent = students.find((student) => student.user.userId === sessionUserId);
+  return sessionStudent?.user.userId ?? students[0].user.userId;
 }
 
 function normalizeStudents(dashboard) {

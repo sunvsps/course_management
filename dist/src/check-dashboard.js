@@ -18,10 +18,13 @@ if (!userId) {
     throw new Error("Missing userId. Pass one as an argument or set DEMO_USER_ID.");
 }
 const dashboard = await getStudentDashboard(userId);
+const studentDashboards = "students" in dashboard ? dashboard.students : [dashboard];
+const enrollments = studentDashboards.flatMap((studentDashboard) => studentDashboard.enrollments);
 console.log("Dashboard summary:", {
     user: dashboard.user,
-    enrollments: dashboard.enrollments.length,
-    courses: dashboard.enrollments.map((enrollment) => enrollment.course?.name),
-    lessons: dashboard.enrollments.reduce((sum, enrollment) => sum + enrollment.lessons.length, 0),
-    attendances: dashboard.enrollments.reduce((sum, enrollment) => sum + enrollment.attendances.length, 0)
+    students: studentDashboards.length,
+    enrollments: enrollments.length,
+    courses: enrollments.map((enrollment) => enrollment.course?.name),
+    lessons: enrollments.reduce((sum, enrollment) => sum + enrollment.lessons.length, 0),
+    attendances: enrollments.reduce((sum, enrollment) => sum + enrollment.attendances.length, 0)
 });

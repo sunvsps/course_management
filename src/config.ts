@@ -16,6 +16,8 @@ const envSchema = z.object({
   HOST: z.string().default("0.0.0.0").transform((value) => value.trim() || "0.0.0.0"),
   APP_BASE_URL: z.string().url().default("http://localhost:3001"),
   SESSION_SECRET: z.string().min(24),
+  ADMIN_USERNAME: z.string().default(""),
+  ADMIN_PASSWORD: z.string().default(""),
   LOCAL_DEMO_ENABLED: envBoolean.default(false),
   MOCK_SHEET_ENABLED: envBoolean.default(false),
   DEMO_USER_ID: z.string().default(""),
