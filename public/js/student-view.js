@@ -132,8 +132,6 @@ function renderAttendanceHistory(enrollment) {
         <thead>
           <tr>
             <th>วันที่</th>
-            <th>เวลา</th>
-            <th>คอร์ส</th>
             <th>ผู้สอน</th>
             <th class="numeric">จำนวน</th>
           </tr>
@@ -142,8 +140,6 @@ function renderAttendanceHistory(enrollment) {
           ${rows.map(({ enrollment, attendance }) => `
             <tr>
               <td data-label="วันที่">${formatDate(attendance.checkedInAt)}</td>
-              <td data-label="เวลา">${formatTime(attendance.checkedInAt)}</td>
-              <td data-label="คอร์ส">${escapeHtml(enrollment.course?.name || "-")}</td>
               <td data-label="ผู้สอน">${escapeHtml(attendance.instructorName)}</td>
               <td data-label="จำนวน" class="numeric">${formatNumber(attendance.classesUsed)} ${courseUnit(enrollment.course)}</td>
             </tr>
