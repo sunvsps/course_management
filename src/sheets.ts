@@ -218,6 +218,7 @@ function toUser(row: Record<string, string>): UserRow {
     lineProfileId: row.lineProfileId,
     displayName: row.displayName,
     pictureUrl: row.pictureUrl,
+    birthDate: row.birthDate,
     role: normalizeRole(row.role)
   };
 }
@@ -273,6 +274,7 @@ function toAttendance(row: Record<string, string>): AttendanceRow {
     instructorName: row.instructorName,
     checkedInAt: row.checkedInAt,
     classesUsed: Number(row.classesUsed),
+    score: optionalNumber(row.score),
     note: row.note
   };
 }
@@ -299,4 +301,10 @@ function normalizeLessonStatus(status: string): LessonRow["status"] {
 function required(value: string, name: string) {
   if (!value) throw new Error(`${name} is required`);
   return value;
+}
+
+function optionalNumber(value: string | undefined) {
+  if (value === undefined || value.trim() === "") return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
 }

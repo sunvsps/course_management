@@ -79,11 +79,11 @@ lineProfileId,lineUserId,displayName,pictureUrl,statusMessage,email,createdAt,up
 ### Users
 
 ```csv
-userId,lineProfileId,displayName,role
-student-demo,line-profile-demo,Demo Student,STUDENT
+userId,lineProfileId,displayName,birthDate,role
+student-demo,line-profile-demo,Demo Student,2018-01-15,STUDENT
 ```
 
-ถ้ายังใช้ demo/mock แบบเดิม โค้ดยังรองรับ header เก่า `lineUserId,displayName,pictureUrl,role` อยู่
+ระบบใช้ `birthDate` เพื่อคำนวณอายุเป็นปีและเดือนให้อัตโนมัติ
 
 ### Courses
 
@@ -117,9 +117,11 @@ lesson-next,enroll-demo,Demo Teacher,2026-05-04T10:00:00+07:00,2026-05-04T11:00:
 ### Attendances
 
 ```csv
-attendanceId,enrollmentId,instructorName,checkedInAt,classesUsed,note
-att-1,enroll-demo,Demo Teacher,2026-04-28T10:05:00+07:00,1,เรียนครั้งที่ 1
+attendanceId,enrollmentId,instructorName,checkedInAt,classesUsed,score,note
+att-1,enroll-demo,Demo Teacher,2026-04-28,1,5,เรียนครั้งที่ 1
 ```
+
+`score` เป็น optional ถ้าว่างไว้ หน้าผู้เรียนจะไม่แสดงคะแนน
 
 ## Connect Google Sheet
 

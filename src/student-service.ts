@@ -38,6 +38,7 @@ export async function getStudentDashboard(userId: string) {
       userId: user.userId,
       displayName: user.displayName,
       pictureUrl: user.pictureUrl,
+      birthDate: user.birthDate,
       role: user.role
     },
     enrollments

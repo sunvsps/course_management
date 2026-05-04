@@ -84,6 +84,58 @@ h2 {
   color: #31599b;
 }
 
+.avatar.small {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+
+.studentSelectorToggle,
+.historyToggle {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: transparent;
+  color: #17202a;
+  padding: 0;
+  text-align: left;
+}
+
+.studentSelectorToggle strong,
+.historyToggle strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.studentOptions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.studentOption {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dde5ea;
+  background: #ffffff;
+  color: #17202a;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.studentOption.selected {
+  border-color: #0f8b5f;
+  box-shadow: 0 0 0 2px rgba(15, 139, 95, 0.12);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -323,6 +375,88 @@ button.secondary {
   background: #ffffff;
 }
 
+.historyPanel {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  background: #ffffff;
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.04);
+}
+
+.historyMeta,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.historyMeta {
+  color: #6c7a89;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pageButton {
+  min-width: 96px;
+}
+
+.pageButton:disabled {
+  opacity: 0.45;
+}
+
+.historyList {
+  display: grid;
+  gap: 10px;
+}
+
+.historyItem {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e4eaef;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.historyItemTop,
+.historyItemMeta,
+.scoreLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.historyItemTop strong {
+  color: #17202a;
+  font-size: 16px;
+}
+
+.historyItemTop span {
+  color: #0f8b5f;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.historyItemMeta,
+.scoreLine {
+  color: #6c7a89;
+  font-size: 13px;
+}
+
+.scoreLine {
+  border-top: 1px solid #eef2f5;
+  padding-top: 8px;
+}
+
+.scoreLine strong {
+  color: #17202a;
+}
+
 .dataTable {
   width: 100%;
   border-collapse: collapse;
@@ -403,6 +537,11 @@ button.secondary {
     font-size: 16px;
   }
 
+  .studentSelectorToggle strong,
+  .historyToggle strong {
+    font-size: 16px;
+  }
+
   .toggleText {
     padding: 6px 9px;
     font-size: 12px;
@@ -434,6 +573,34 @@ button.secondary {
 
   .detailStat.compact strong {
     font-size: 16px;
+  }
+
+  .historyPanel {
+    gap: 10px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .historyMeta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pagination {
+    gap: 8px;
+  }
+
+  .pageButton {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .historyItemMeta,
+  .scoreLine {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .dataTable {

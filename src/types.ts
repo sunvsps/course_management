@@ -19,6 +19,7 @@ export type UserRow = {
   lineProfileId?: string;
   displayName: string;
   pictureUrl?: string;
+  birthDate?: string;
   role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
 };
 
@@ -53,6 +54,7 @@ export type AttendanceRow = {
   instructorName: string;
   checkedInAt: string;
   classesUsed: number;
+  score?: number;
   note?: string;
 };
 

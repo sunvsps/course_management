@@ -1,28 +1,100 @@
-import { escapeHtml, formatDate, formatDateTime, formatNumber, formatTime } from "./format.js";
+import { escapeHtml, formatDate, formatDateTime, formatNumber } from "./format.js";
 
 let selectedEnrollmentId = null;
+let selectedStudentId = null;
+let currentStudents = [];
 let currentEnrollments = [];
 let isCourseDetailOpen = false;
+let isStudentSelectorOpen = false;
+let isHistoryOpen = false;
+let historyPage = 1;
+const historyPageSize = 10;
 
 export function renderStudentDashboard(dashboard) {
   document.getElementById("loadingView").classList.add("hidden");
   document.getElementById("studentView").classList.remove("hidden");
 
-  currentEnrollments = dashboard.enrollments;
-  selectedEnrollmentId = selectDefaultEnrollmentId(currentEnrollments);
-  renderProfile(dashboard.user);
-  renderBalanceCards(dashboard.enrollments);
-  renderSelectedCourse();
+  currentStudents = normalizeStudents(dashboard);
+  selectedStudentId = currentStudents.length === 1 ? currentStudents[0].user.userId : null;
+  renderProfile();
+  renderSelectedStudent();
 }
 
-function renderProfile(user) {
-  const initial = escapeHtml(user.displayName.charAt(0) || "S");
-  document.getElementById("profile").innerHTML = `
-    <div class="avatar">${initial}</div>
-    <div>
-      <div class="rowTitle">${escapeHtml(user.displayName)}</div>
-    </div>
+function renderProfile() {
+  const profile = document.getElementById("profile");
+
+  if (currentStudents.length <= 1) {
+    const user = currentStudents[0]?.user;
+    const initial = escapeHtml(user?.displayName?.charAt(0) || "S");
+    profile.innerHTML = `
+      <div class="avatar">${initial}</div>
+      <div>
+        <div class="rowTitle">${escapeHtml(user?.displayName || "ผู้เรียน")}</div>
+        ${studentAgeText(user) ? `<div class="muted">${escapeHtml(studentAgeText(user))}</div>` : ""}
+      </div>
+    `;
+    return;
+  }
+
+  const selectedStudent = currentStudents.find((student) => student.user.userId === selectedStudentId);
+  profile.innerHTML = `
+    <button class="studentSelectorToggle" type="button" aria-expanded="${isStudentSelectorOpen ? "true" : "false"}">
+      <span>
+        <span class="eyebrow">เลือกผู้เรียน</span>
+        <strong>${escapeHtml(selectedStudent?.user.displayName || "เลือกนักเรียน")}</strong>
+        ${studentAgeText(selectedStudent?.user) ? `<span class="muted">${escapeHtml(studentAgeText(selectedStudent.user))}</span>` : ""}
+      </span>
+      <span class="toggleText">${isStudentSelectorOpen ? "ซ่อน" : "เลือก"}</span>
+    </button>
+    ${isStudentSelectorOpen ? `
+      <div class="studentOptions">
+        ${currentStudents.map((student) => `
+          <button class="studentOption ${student.user.userId === selectedStudentId ? "selected" : ""}" type="button" data-student-id="${escapeHtml(student.user.userId)}">
+            <span class="avatar small">${escapeHtml(student.user.displayName.charAt(0) || "S")}</span>
+            <span>
+              <span>${escapeHtml(student.user.displayName)}</span>
+              ${studentAgeText(student.user) ? `<span class="muted">${escapeHtml(studentAgeText(student.user))}</span>` : ""}
+            </span>
+          </button>
+        `).join("")}
+      </div>
+    ` : ""}
   `;
+
+  profile.querySelector(".studentSelectorToggle").onclick = () => {
+    isStudentSelectorOpen = !isStudentSelectorOpen;
+    renderProfile();
+  };
+
+  profile.querySelectorAll("[data-student-id]").forEach((button) => {
+    button.onclick = () => {
+      selectedStudentId = button.dataset.studentId;
+      isStudentSelectorOpen = false;
+      isCourseDetailOpen = false;
+      isHistoryOpen = false;
+      historyPage = 1;
+      renderProfile();
+      renderSelectedStudent();
+    };
+  });
+}
+
+function renderSelectedStudent() {
+  const selectedStudent = currentStudents.find((student) => student.user.userId === selectedStudentId);
+
+  if (!selectedStudent) {
+    currentEnrollments = [];
+    selectedEnrollmentId = null;
+    document.getElementById("balanceCards").innerHTML = empty("กรุณาเลือกนักเรียนเพื่อดูข้อมูลการเรียน");
+    document.getElementById("courseDetail").classList.add("hidden");
+    document.getElementById("attendanceHistory").innerHTML = "";
+    return;
+  }
+
+  currentEnrollments = selectedStudent.enrollments;
+  selectedEnrollmentId = selectDefaultEnrollmentId(currentEnrollments);
+  renderBalanceCards(currentEnrollments);
+  renderSelectedCourse();
 }
 
 function renderBalanceCards(enrollments) {
@@ -47,6 +119,8 @@ function handleCourseSelect(event) {
   if (button) {
     selectedEnrollmentId = button.dataset.enrollmentId;
     isCourseDetailOpen = false;
+    isHistoryOpen = false;
+    historyPage = 1;
     renderBalanceCards(currentEnrollments);
     renderSelectedCourse();
   }
@@ -115,39 +189,75 @@ function renderNextLessons(enrollment) {
 }
 
 function renderAttendanceHistory(enrollment) {
-  const rows = enrollment.attendances.map((attendance) => ({ enrollment, attendance }));
+  const rows = enrollment.attendances
+    .map((attendance) => ({ enrollment, attendance }))
+    .sort((a, b) => new Date(b.attendance.checkedInAt).getTime() - new Date(a.attendance.checkedInAt).getTime());
+  const history = document.getElementById("attendanceHistory");
+  const totalPages = Math.max(1, Math.ceil(rows.length / historyPageSize));
+  historyPage = Math.min(Math.max(historyPage, 1), totalPages);
+  const start = (historyPage - 1) * historyPageSize;
+  const pageRows = rows.slice(start, start + historyPageSize);
 
-  if (rows.length === 0) {
-    document.getElementById("attendanceHistory").innerHTML = `
-      <h2 class="sectionLabel">ประวัติการเข้าเรียน</h2>
-      ${empty("ยังไม่มีประวัติ")}
-    `;
-    return;
-  }
-
-  document.getElementById("attendanceHistory").innerHTML = `
-    <h2 class="sectionLabel">ประวัติการเข้าเรียน</h2>
-    <div class="tableWrap">
-      <table class="dataTable">
-        <thead>
-          <tr>
-            <th>วันที่</th>
-            <th>ผู้สอน</th>
-            <th class="numeric">จำนวน</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(({ enrollment, attendance }) => `
-            <tr>
-              <td data-label="วันที่">${formatDate(attendance.checkedInAt)}</td>
-              <td data-label="ผู้สอน">${escapeHtml(attendance.instructorName)}</td>
-              <td data-label="จำนวน" class="numeric">${formatNumber(attendance.classesUsed)} ${courseUnit(enrollment.course)}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
+  history.innerHTML = `
+    <section class="historyPanel">
+      <button class="historyToggle" type="button" aria-expanded="${isHistoryOpen ? "true" : "false"}">
+        <span>
+          <span class="eyebrow">ประวัติ</span>
+          <strong>ประวัติการเข้าเรียน</strong>
+          <span class="muted">${formatNumber(rows.length)} รายการ</span>
+        </span>
+        <span class="toggleText">${isHistoryOpen ? "ซ่อน" : "ดูประวัติ"}</span>
+      </button>
+      ${isHistoryOpen ? rows.length === 0 ? empty("ยังไม่มีประวัติ") : `
+        <div class="historyMeta">
+          <span>แสดง ${formatNumber(start + 1)}-${formatNumber(Math.min(start + historyPageSize, rows.length))} จาก ${formatNumber(rows.length)} รายการ</span>
+          <span>หน้า ${formatNumber(historyPage)} / ${formatNumber(totalPages)}</span>
+        </div>
+        <div class="historyList">
+          ${pageRows.map(({ enrollment, attendance }, index) => {
+            const lessonNumber = rows.length - (start + index);
+            return `
+              <article class="historyItem">
+                <div class="historyItemTop">
+                  <strong>ครั้งที่ ${formatNumber(lessonNumber)}</strong>
+                  <span>${formatNumber(attendance.classesUsed)} ${courseUnit(enrollment.course)}</span>
+                </div>
+                <div class="historyItemMeta">
+                  <span>${formatDate(attendance.checkedInAt)}</span>
+                  <span>คุณครู: ${escapeHtml(attendance.instructorName)}</span>
+                </div>
+                ${scoreText(attendance) ? `
+                  <div class="scoreLine">
+                    <span>คะแนนให้ความร่วมมือ</span>
+                    <strong>${scoreText(attendance)}</strong>
+                  </div>
+                ` : ""}
+              </article>
+            `;
+          }).join("")}
+        </div>
+        ${totalPages > 1 ? `
+          <div class="pagination">
+            <button class="secondary pageButton" type="button" data-page-action="prev" ${historyPage === 1 ? "disabled" : ""}>ก่อนหน้า</button>
+            <button class="secondary pageButton" type="button" data-page-action="next" ${historyPage === totalPages ? "disabled" : ""}>ถัดไป</button>
+          </div>
+        ` : ""}
+      ` : ""}
+    </section>
   `;
+
+  history.querySelector(".historyToggle").onclick = () => {
+    isHistoryOpen = !isHistoryOpen;
+    historyPage = 1;
+    renderAttendanceHistory(enrollment);
+  };
+
+  history.querySelectorAll("[data-page-action]").forEach((button) => {
+    button.onclick = () => {
+      historyPage += button.dataset.pageAction === "next" ? 1 : -1;
+      renderAttendanceHistory(enrollment);
+    };
+  });
 }
 
 function empty(text) {
@@ -160,6 +270,54 @@ function courseUnit(course) {
 
 function selectDefaultEnrollmentId(enrollments) {
   return enrollments[0]?.enrollmentId ?? null;
+}
+
+function normalizeStudents(dashboard) {
+  if (Array.isArray(dashboard.students) && dashboard.students.length > 0) {
+    return dashboard.students.map((student) => ({
+      user: student.user ?? student,
+      enrollments: student.enrollments ?? []
+    }));
+  }
+
+  return [{
+    user: dashboard.user,
+    enrollments: dashboard.enrollments ?? []
+  }];
+}
+
+function studentAgeText(user) {
+  if (!user) return "";
+  if (!user.birthDate) return "";
+
+  const age = calculateAge(user.birthDate);
+  if (!age) return "";
+  return `อายุ ${formatNumber(age.years)} ปี ${formatNumber(age.months)} เดือน`;
+}
+
+function scoreText(attendance) {
+  if (!Number.isFinite(Number(attendance.score))) return "";
+  return `ครูประเมิน ${formatNumber(attendance.score)}/5`;
+}
+
+function calculateAge(birthDate) {
+  const birth = new Date(birthDate);
+  if (!Number.isFinite(birth.getTime())) return null;
+
+  const today = new Date();
+  let years = today.getFullYear() - birth.getFullYear();
+  let months = today.getMonth() - birth.getMonth();
+
+  if (today.getDate() < birth.getDate()) {
+    months -= 1;
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  return { years: Math.max(years, 0), months: Math.max(months, 0) };
 }
 
 function statusLabel(status) {
