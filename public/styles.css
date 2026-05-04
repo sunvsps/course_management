@@ -47,6 +47,10 @@ h2 {
   font-size: 18px;
 }
 
+.sectionLabel {
+  margin: 18px 0 10px;
+}
+
 .hidden {
   display: none !important;
 }
@@ -181,13 +185,13 @@ h2 {
 
 .courseDetail {
   display: grid;
-  gap: 12px;
-  margin-top: 18px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-top: 14px;
+  margin-bottom: 14px;
   background: #ffffff;
   border: 1px solid #dde5ea;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
   box-shadow: 0 1px 2px rgba(23, 32, 42, 0.04);
 }
 
@@ -195,8 +199,39 @@ h2 {
   margin: 0;
 }
 
+.courseDetailToggle {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: #17202a;
+  padding: 0;
+  text-align: left;
+}
+
+.courseDetailToggle strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.toggleText {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #edf7f2;
+  color: #0f8b5f;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
 .courseStatusText {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: #0f8b5f;
   font-size: 14px;
   font-weight: 800;
@@ -204,18 +239,37 @@ h2 {
 
 .detailStats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.9fr);
+  gap: 10px;
 }
 
 .detailStat {
   display: grid;
   gap: 4px;
-  min-height: 84px;
+  min-height: 72px;
   align-content: center;
   border-radius: 8px;
   background: #f6f8f9;
-  padding: 14px;
+  padding: 12px;
+}
+
+.detailStat.primary {
+  min-height: 96px;
+  background: #edf7f2;
+}
+
+.detailSecondaryStats {
+  display: grid;
+  gap: 8px;
+}
+
+.detailStat.compact {
+  min-height: 44px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  align-content: center;
+  background: #f6f8f9;
+  padding: 8px 10px;
 }
 
 .detailLabel {
@@ -226,9 +280,17 @@ h2 {
 
 .detailStat strong {
   color: #17202a;
-  font-size: 28px;
   line-height: 1.1;
   font-weight: 850;
+}
+
+.detailStat.primary strong {
+  color: #0f8b5f;
+  font-size: 32px;
+}
+
+.detailStat.compact strong {
+  font-size: 18px;
 }
 
 .nextLesson {
@@ -302,25 +364,76 @@ button.secondary {
 }
 
 @media (max-width: 640px) {
+  .shell {
+    padding: 14px;
+  }
+
   .topbar {
     align-items: stretch;
     flex-direction: column;
   }
 
   .courseRail {
-    grid-auto-columns: minmax(240px, 82%);
-    margin-left: -20px;
-    margin-right: -20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    grid-auto-columns: minmax(260px, 88%);
+    padding: 2px 2px 12px;
+    scroll-padding-inline: 2px;
   }
 
   .courseCard {
-    min-height: 132px;
+    min-height: 124px;
+    padding: 14px;
+  }
+
+  .courseCardTop strong {
+    font-size: 14px;
+  }
+
+  .balance {
+    font-size: 30px;
+  }
+
+  .courseDetail {
+    gap: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+
+  .courseDetailToggle strong {
+    font-size: 16px;
+  }
+
+  .toggleText {
+    padding: 6px 9px;
+    font-size: 12px;
   }
 
   .detailStats {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .detailStat.primary {
+    min-height: 78px;
+    padding: 10px 12px;
+  }
+
+  .detailStat.primary strong {
+    font-size: 28px;
+  }
+
+  .detailSecondaryStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detailStat.compact {
+    min-height: 48px;
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .detailStat.compact strong {
+    font-size: 16px;
   }
 
   .dataTable {

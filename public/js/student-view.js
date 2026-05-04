@@ -2,6 +2,7 @@ import { escapeHtml, formatDate, formatDateTime, formatNumber, formatTime } from
 
 let selectedEnrollmentId = null;
 let currentEnrollments = [];
+let isCourseDetailOpen = false;
 
 export function renderStudentDashboard(dashboard) {
   document.getElementById("loadingView").classList.add("hidden");
@@ -45,6 +46,7 @@ function handleCourseSelect(event) {
   const button = event.target.closest("[data-enrollment-id]");
   if (button) {
     selectedEnrollmentId = button.dataset.enrollmentId;
+    isCourseDetailOpen = false;
     renderBalanceCards(currentEnrollments);
     renderSelectedCourse();
   }
@@ -62,26 +64,38 @@ function renderSelectedCourse() {
 
   detail.classList.remove("hidden");
   detail.innerHTML = `
-    <div>
-      <p class="eyebrow">รายละเอียดคอร์ส</p>
-      <h2>${escapeHtml(enrollment.course?.name || "-")}</h2>
+    <button class="courseDetailToggle" type="button" aria-expanded="${isCourseDetailOpen ? "true" : "false"}">
+      <span>
+        <span class="eyebrow">รายละเอียดคอร์ส</span>
+        <strong>${escapeHtml(enrollment.course?.name || "-")}</strong>
+      </span>
+      <span class="toggleText">${isCourseDetailOpen ? "ซ่อน" : "ดูรายละเอียด"}</span>
+    </button>
+    ${isCourseDetailOpen ? `
       <p class="courseStatusText">${statusLabel(enrollment.status)}</p>
-    </div>
-    <div class="detailStats">
-      <div class="detailStat">
-        <span class="detailLabel">เหลือ</span>
-        <strong>${formatNumber(enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</strong>
+      <div class="detailStats">
+        <div class="detailStat primary">
+          <span class="detailLabel">เหลือ</span>
+          <strong>${formatNumber(enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</strong>
+        </div>
+        <div class="detailSecondaryStats">
+          <div class="detailStat compact">
+            <span class="detailLabel">ใช้แล้ว</span>
+            <strong>${formatNumber(enrollment.purchasedClasses - enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</strong>
+          </div>
+          <div class="detailStat compact">
+            <span class="detailLabel">ทั้งหมด</span>
+            <strong>${formatNumber(enrollment.purchasedClasses)} ${courseUnit(enrollment.course)}</strong>
+          </div>
+        </div>
       </div>
-      <div class="detailStat">
-        <span class="detailLabel">ใช้แล้ว</span>
-        <strong>${formatNumber(enrollment.purchasedClasses - enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</strong>
-      </div>
-      <div class="detailStat">
-        <span class="detailLabel">ทั้งหมด</span>
-        <strong>${formatNumber(enrollment.purchasedClasses)} ${courseUnit(enrollment.course)}</strong>
-      </div>
-    </div>
+    ` : ""}
   `;
+
+  detail.querySelector(".courseDetailToggle").onclick = () => {
+    isCourseDetailOpen = !isCourseDetailOpen;
+    renderSelectedCourse();
+  };
 
   // renderNextLessons(enrollment);
   renderAttendanceHistory(enrollment);
@@ -104,11 +118,15 @@ function renderAttendanceHistory(enrollment) {
   const rows = enrollment.attendances.map((attendance) => ({ enrollment, attendance }));
 
   if (rows.length === 0) {
-    document.getElementById("attendanceHistory").innerHTML = empty("ยังไม่มีประวัติ");
+    document.getElementById("attendanceHistory").innerHTML = `
+      <h2 class="sectionLabel">ประวัติการเข้าเรียน</h2>
+      ${empty("ยังไม่มีประวัติ")}
+    `;
     return;
   }
 
   document.getElementById("attendanceHistory").innerHTML = `
+    <h2 class="sectionLabel">ประวัติการเข้าเรียน</h2>
     <div class="tableWrap">
       <table class="dataTable">
         <thead>
