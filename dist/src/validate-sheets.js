@@ -4,7 +4,7 @@ const db = await loadSheetDatabase();
 const issues = [];
 for (const user of db.users) {
     if (!user.userId)
-        issues.push(`Users: missing userId for ${user.displayName || user.lineProfileId || user.lineUserId}`);
+        issues.push(`Users: missing userId for ${user.displayName || user.lineProfileId || "(blank user)"}`);
     if (user.lineProfileId && !db.lineProfiles.some((profile) => profile.lineProfileId === user.lineProfileId)) {
         issues.push(`Users: userId ${user.userId || "(blank)"} references missing lineProfileId ${user.lineProfileId}`);
     }

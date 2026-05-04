@@ -216,7 +216,6 @@ function toUser(row: Record<string, string>): UserRow {
   return {
     userId: row.userId,
     lineProfileId: row.lineProfileId,
-    lineUserId: row.lineUserId,
     displayName: row.displayName,
     pictureUrl: row.pictureUrl,
     role: normalizeRole(row.role)
@@ -236,8 +235,6 @@ function toEnrollment(row: Record<string, string>): EnrollmentRow {
   return {
     enrollmentId: row.enrollmentId,
     userId: row.userId,
-    lineUserId: row.lineUserId,
-    lineProfileId: row.lineProfileId,
     courseId: row.courseId,
     purchasedClasses: Number(row.purchasedClasses),
     remainingClasses: Number(row.remainingClasses),

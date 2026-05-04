@@ -1,6 +1,5 @@
 export type SessionUser = {
-  lineUserId: string;
-  lineProfileId?: string;
+  userId: string;
   displayName: string;
 };
 
@@ -18,7 +17,6 @@ export type LineProfileRow = {
 export type UserRow = {
   userId?: string;
   lineProfileId?: string;
-  lineUserId?: string;
   displayName: string;
   pictureUrl?: string;
   role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
@@ -34,8 +32,6 @@ export type CourseRow = {
 export type EnrollmentRow = {
   enrollmentId: string;
   userId?: string;
-  lineUserId?: string;
-  lineProfileId?: string;
   courseId: string;
   purchasedClasses: number;
   remainingClasses: number;

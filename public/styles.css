@@ -86,10 +86,72 @@ h2 {
   gap: 12px;
 }
 
+.courseRail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 31%);
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 2px 10px;
+  scroll-padding-inline: 2px;
+  scroll-snap-type: inline proximity;
+  scrollbar-width: thin;
+}
+
 .card strong {
   display: block;
   font-size: 15px;
   margin-bottom: 10px;
+}
+
+.courseCard {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
+  padding: 16px;
+  color: #17202a;
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.04);
+  min-height: 140px;
+  scroll-snap-align: start;
+}
+
+.courseCard.selected {
+  border-color: #0f8b5f;
+  box-shadow: 0 0 0 2px rgba(15, 139, 95, 0.14);
+}
+
+.courseCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.courseCardTop strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.statusBadge {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.statusBadge.active {
+  color: #126a3a;
+  background: #e8f6ef;
+}
+
+.statusBadge.inactive {
+  color: #69727d;
+  background: #edf1f4;
 }
 
 .balance {
@@ -115,6 +177,65 @@ h2 {
 
 .rowTitle {
   font-weight: 750;
+}
+
+.courseDetail {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.04);
+}
+
+.courseDetail h2 {
+  margin: 0;
+}
+
+.courseStatusText {
+  margin: 6px 0 0;
+  color: #0f8b5f;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.detailStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detailStat {
+  display: grid;
+  gap: 4px;
+  min-height: 84px;
+  align-content: center;
+  border-radius: 8px;
+  background: #f6f8f9;
+  padding: 14px;
+}
+
+.detailLabel {
+  color: #6c7a89;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.detailStat strong {
+  color: #17202a;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 850;
+}
+
+.nextLesson {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid #e4eaef;
 }
 
 button {
@@ -184,6 +305,22 @@ button.secondary {
   .topbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .courseRail {
+    grid-auto-columns: minmax(240px, 82%);
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .courseCard {
+    min-height: 132px;
+  }
+
+  .detailStats {
+    grid-template-columns: 1fr;
   }
 
   .dataTable {

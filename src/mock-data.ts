@@ -3,7 +3,7 @@ import type { AttendanceRow, CourseRow, EnrollmentRow, LessonRow, LineProfileRow
 export const mockLineProfiles: LineProfileRow[] = [
   {
     lineProfileId: "line-profile-demo",
-    lineUserId: "demo-student",
+    lineUserId: "1234",
     displayName: "Demo Student",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -12,9 +12,8 @@ export const mockLineProfiles: LineProfileRow[] = [
 
 export const mockUsers: UserRow[] = [
   {
-    userId: "student-demo",
+    userId: "1234",
     lineProfileId: "line-profile-demo",
-    lineUserId: "demo-student",
     displayName: "Demo Student",
     role: "STUDENT"
   }
@@ -38,8 +37,7 @@ export const mockCourses: CourseRow[] = [
 export const mockEnrollments: EnrollmentRow[] = [
   {
     enrollmentId: "enroll-demo",
-    userId: "student-demo",
-    lineUserId: "demo-student",
+    userId: "1234",
     courseId: "course-10",
     purchasedClasses: 10,
     remainingClasses: 5,

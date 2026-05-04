@@ -165,7 +165,6 @@ function toUser(row) {
     return {
         userId: row.userId,
         lineProfileId: row.lineProfileId,
-        lineUserId: row.lineUserId,
         displayName: row.displayName,
         pictureUrl: row.pictureUrl,
         role: normalizeRole(row.role)
@@ -183,8 +182,6 @@ function toEnrollment(row) {
     return {
         enrollmentId: row.enrollmentId,
         userId: row.userId,
-        lineUserId: row.lineUserId,
-        lineProfileId: row.lineProfileId,
         courseId: row.courseId,
         purchasedClasses: Number(row.purchasedClasses),
         remainingClasses: Number(row.remainingClasses),

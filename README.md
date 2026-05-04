@@ -6,8 +6,8 @@
 
 ```bash
 npm install
-cp .env.example .env
-npm run dev
+cp .env.local.example .env.local
+npm run dev:local
 ```
 
 เปิด:
@@ -16,7 +16,53 @@ npm run dev
 http://localhost:3001
 ```
 
-ค่า default ใน `.env.example` ใช้ `MOCK_SHEET_ENABLED=true` จึงเปิดดูหน้านักเรียนได้ทันทีโดยยังไม่ต้องต่อ Google Sheet จริง
+ค่า local อยู่ใน `.env.local` และจะถูกโหลดเมื่อรัน `npm run dev:local`
+
+ถ้าต้องการใช้ Google Sheet จริงในเครื่อง ให้ตั้ง:
+
+```env
+MOCK_SHEET_ENABLED=false
+DEMO_USER_ID="userId-from-users-tab"
+```
+
+ถ้าต้องการใช้ mock data ไม่ต่อ Google Sheet ให้ตั้ง:
+
+```env
+MOCK_SHEET_ENABLED=true
+DEMO_USER_ID="1234"
+```
+
+## Environment Files
+
+โปรเจกต์นี้แยก env เป็น 2 ชุด:
+
+```text
+.env.local.example       ตัวอย่างสำหรับรันในเครื่อง
+.env.production.example  ตัวอย่างสำหรับ deploy จริง เช่น Render
+```
+
+ไฟล์จริงที่มี secret ไม่ควร commit:
+
+```text
+.env.local
+.env.production
+.env
+```
+
+คำสั่ง local:
+
+```bash
+cp .env.local.example .env.local
+npm run dev:local
+```
+
+ถ้าจะรัน production local เพื่อทดสอบ:
+
+```bash
+cp .env.production.example .env.production
+npm run build
+npm run start:production
+```
 
 ## Google Sheet Tabs
 
@@ -127,6 +173,18 @@ HOST=0.0.0.0
 LOCAL_DEMO_ENABLED=false
 MOCK_SHEET_ENABLED=false
 APP_BASE_URL=https://your-app.onrender.com
+```
+
+ให้เอาค่าจาก `.env.production.example` ไปกรอกใน Render Dashboard > Environment ทีละตัว โดยเฉพาะ:
+
+```env
+SESSION_SECRET=...
+APP_BASE_URL=https://your-app.onrender.com
+LIFF_ID=...
+LINE_LOGIN_CHANNEL_ID=...
+GOOGLE_SPREADSHEET_ID=...
+GOOGLE_SERVICE_ACCOUNT_EMAIL=...
+GOOGLE_PRIVATE_KEY=...
 ```
 
 แล้วนำ URL ไปตั้งเป็น LIFF endpoint

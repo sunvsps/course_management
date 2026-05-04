@@ -1,7 +1,7 @@
 export const mockLineProfiles = [
     {
         lineProfileId: "line-profile-demo",
-        lineUserId: "demo-student",
+        lineUserId: "1234",
         displayName: "Demo Student",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -9,9 +9,8 @@ export const mockLineProfiles = [
 ];
 export const mockUsers = [
     {
-        userId: "student-demo",
+        userId: "1234",
         lineProfileId: "line-profile-demo",
-        lineUserId: "demo-student",
         displayName: "Demo Student",
         role: "STUDENT"
     }
@@ -33,8 +32,7 @@ export const mockCourses = [
 export const mockEnrollments = [
     {
         enrollmentId: "enroll-demo",
-        userId: "student-demo",
-        lineUserId: "demo-student",
+        userId: "1234",
         courseId: "course-10",
         purchasedClasses: 10,
         remainingClasses: 5,

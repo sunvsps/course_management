@@ -2,14 +2,22 @@ import "dotenv/config";
 import { loadSheetDatabase } from "./sheets.js";
 import { getStudentDashboard } from "./student-service.js";
 const db = await loadSheetDatabase();
-const lineUserId = process.argv[2] ?? db.lineProfiles[0]?.lineUserId ?? "demo-student";
+const userId = process.argv[2] ?? process.env.DEMO_USER_ID ?? db.users[0]?.userId;
 console.log("Dashboard check");
-console.log({ lineUserId });
-const lineProfile = db.lineProfiles.find((profile) => profile.lineUserId === lineUserId);
-console.log("LineProfile:", lineProfile ?? "(not found)");
-const user = db.users.find((item) => item.lineUserId === lineUserId || Boolean(lineProfile && item.lineProfileId === lineProfile.lineProfileId));
-console.log("User:", user ?? "(not found)");
-const dashboard = await getStudentDashboard(lineUserId);
+console.log({ userId });
+const user = db.users.find((item) => item.userId === userId);
+console.log("User:", user
+    ? {
+        userId: user.userId,
+        displayName: user.displayName,
+        pictureUrl: user.pictureUrl,
+        role: user.role
+    }
+    : "(not found)");
+if (!userId) {
+    throw new Error("Missing userId. Pass one as an argument or set DEMO_USER_ID.");
+}
+const dashboard = await getStudentDashboard(userId);
 console.log("Dashboard summary:", {
     user: dashboard.user,
     enrollments: dashboard.enrollments.length,

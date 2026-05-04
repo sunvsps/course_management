@@ -1,15 +1,12 @@
 import { loadSheetDatabase } from "./sheets.js";
-export async function getStudentDashboard(lineUserId) {
+export async function getStudentDashboard(userId) {
     const db = await loadSheetDatabase();
-    const lineProfile = db.lineProfiles.find((item) => item.lineUserId === lineUserId);
-    const user = db.users.find((item) => item.lineUserId === lineUserId || Boolean(lineProfile && item.lineProfileId === lineProfile.lineProfileId));
+    const user = db.users.find((item) => item.userId === userId);
     if (!user) {
         throw new Error("Student not found");
     }
     const enrollments = db.enrollments
-        .filter((enrollment) => Boolean(user.userId && enrollment.userId === user.userId) ||
-        enrollment.lineUserId === lineUserId ||
-        Boolean(lineProfile && enrollment.lineProfileId === lineProfile.lineProfileId))
+        .filter((enrollment) => enrollment.userId === user.userId)
         .map((enrollment) => {
         const course = db.courses.find((item) => item.courseId === enrollment.courseId);
         const lessons = db.lessons
@@ -22,8 +19,39 @@ export async function getStudentDashboard(lineUserId) {
             ...enrollment,
             course,
             lessons,
-            attendances
+            attendances,
+            latestActivityAt: latestActivityAt(lessons, attendances)
         };
+    })
+        .sort((a, b) => {
+        const statusDelta = statusRank(a.status) - statusRank(b.status);
+        if (statusDelta !== 0)
+            return statusDelta;
+        return new Date(b.latestActivityAt).getTime() - new Date(a.latestActivityAt).getTime();
     });
-    return { user, enrollments };
+    return {
+        user: {
+            userId: user.userId,
+            displayName: user.displayName,
+            pictureUrl: user.pictureUrl,
+            role: user.role
+        },
+        enrollments
+    };
+}
+function statusRank(status) {
+    if (status === "ACTIVE")
+        return 0;
+    if (status === "PAUSED")
+        return 1;
+    if (status === "COMPLETED")
+        return 2;
+    return 3;
+}
+function latestActivityAt(lessons, attendances) {
+    const timestamps = [
+        ...lessons.map((lesson) => new Date(lesson.startsAt).getTime()),
+        ...attendances.map((attendance) => new Date(attendance.checkedInAt).getTime())
+    ].filter(Number.isFinite);
+    return new Date(Math.max(...timestamps, 0)).toISOString();
 }

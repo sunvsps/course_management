@@ -1,5 +1,7 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { z } from "zod";
+
+dotenv.config({ path: process.env.APP_ENV ? `.env.${process.env.APP_ENV}` : ".env" });
 
 const envBoolean = z.preprocess((value) => {
   if (typeof value !== "string") return value;
@@ -16,6 +18,8 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(24),
   LOCAL_DEMO_ENABLED: envBoolean.default(false),
   MOCK_SHEET_ENABLED: envBoolean.default(false),
+  DEMO_USER_ID: z.string().default(""),
+  DEMO_DISPLAY_NAME: z.string().default("Demo Student"),
   LINE_LOGIN_CHANNEL_ID: z.string().default(""),
   LIFF_ID: z.string().default(""),
   GOOGLE_SPREADSHEET_ID: z.string().default(""),

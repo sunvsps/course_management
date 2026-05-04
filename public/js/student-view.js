@@ -1,13 +1,17 @@
 import { escapeHtml, formatDate, formatDateTime, formatNumber, formatTime } from "./format.js";
 
+let selectedEnrollmentId = null;
+let currentEnrollments = [];
+
 export function renderStudentDashboard(dashboard) {
   document.getElementById("loadingView").classList.add("hidden");
   document.getElementById("studentView").classList.remove("hidden");
 
+  currentEnrollments = dashboard.enrollments;
+  selectedEnrollmentId = selectDefaultEnrollmentId(currentEnrollments);
   renderProfile(dashboard.user);
   renderBalanceCards(dashboard.enrollments);
-  // renderNextLessons(dashboard.enrollments);
-  renderAttendanceHistory(dashboard.enrollments);
+  renderSelectedCourse();
 }
 
 function renderProfile(user) {
@@ -16,39 +20,88 @@ function renderProfile(user) {
     <div class="avatar">${initial}</div>
     <div>
       <div class="rowTitle">${escapeHtml(user.displayName)}</div>
-      <div class="muted">ข้อมูลจาก Google Sheet</div>
     </div>
   `;
 }
 
 function renderBalanceCards(enrollments) {
-  document.getElementById("balanceCards").innerHTML = enrollments.map((enrollment) => `
-    <article class="card">
-      <strong>${escapeHtml(enrollment.course?.name || "-")}</strong>
-      <div class="balance">${formatNumber(enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</div>
+  const rail = document.getElementById("balanceCards");
+  rail.innerHTML = enrollments.map((enrollment) => `
+    <button class="courseCard ${enrollment.enrollmentId === selectedEnrollmentId ? "selected" : ""}" type="button" data-enrollment-id="${escapeHtml(enrollment.enrollmentId)}">
+      <span class="courseCardTop">
+        <strong>${escapeHtml(enrollment.course?.name || "-")}</strong>
+        <span class="statusBadge ${statusClass(enrollment.status)}">${statusLabel(enrollment.status)}</span>
+      </span>
+      <span class="balance">${formatNumber(enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</span>
       <p class="muted">จากทั้งหมด ${formatNumber(enrollment.purchasedClasses)} ${courseUnit(enrollment.course)}</p>
-    </article>
+    </button>
   `).join("") || empty("ยังไม่มีคอร์ส");
+
+  rail.onclick = handleCourseSelect;
+  rail.querySelector(".courseCard.selected")?.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
-function renderNextLessons(enrollments) {
-  const lessons = enrollments.flatMap((enrollment) =>
-    enrollment.lessons.map((lesson) => ({ enrollment, lesson }))
-  );
-
-  document.getElementById("nextLessons").innerHTML = lessons.map(({ enrollment, lesson }) => `
-    <article class="row">
-      <div class="rowTitle">${escapeHtml(enrollment.course?.name || "-")}</div>
-      <div>${formatDateTime(lesson.startsAt)}</div>
-      <div class="muted">ผู้สอน: ${escapeHtml(lesson.instructorName)}</div>
-    </article>
-  `).join("") || empty("ยังไม่มีตารางเรียน");
+function handleCourseSelect(event) {
+  const button = event.target.closest("[data-enrollment-id]");
+  if (button) {
+    selectedEnrollmentId = button.dataset.enrollmentId;
+    renderBalanceCards(currentEnrollments);
+    renderSelectedCourse();
+  }
 }
 
-function renderAttendanceHistory(enrollments) {
-  const rows = enrollments.flatMap((enrollment) =>
-    enrollment.attendances.map((attendance) => ({ enrollment, attendance }))
-  );
+function renderSelectedCourse() {
+  const enrollment = currentEnrollments.find((item) => item.enrollmentId === selectedEnrollmentId);
+  const detail = document.getElementById("courseDetail");
+
+  if (!enrollment) {
+    detail.classList.add("hidden");
+    document.getElementById("attendanceHistory").innerHTML = empty("ยังไม่มีคอร์ส");
+    return;
+  }
+
+  detail.classList.remove("hidden");
+  detail.innerHTML = `
+    <div>
+      <p class="eyebrow">รายละเอียดคอร์ส</p>
+      <h2>${escapeHtml(enrollment.course?.name || "-")}</h2>
+      <p class="courseStatusText">${statusLabel(enrollment.status)}</p>
+    </div>
+    <div class="detailStats">
+      <div class="detailStat">
+        <span class="detailLabel">เหลือ</span>
+        <strong>${formatNumber(enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</strong>
+      </div>
+      <div class="detailStat">
+        <span class="detailLabel">ใช้แล้ว</span>
+        <strong>${formatNumber(enrollment.purchasedClasses - enrollment.remainingClasses)} ${courseUnit(enrollment.course)}</strong>
+      </div>
+      <div class="detailStat">
+        <span class="detailLabel">ทั้งหมด</span>
+        <strong>${formatNumber(enrollment.purchasedClasses)} ${courseUnit(enrollment.course)}</strong>
+      </div>
+    </div>
+  `;
+
+  // renderNextLessons(enrollment);
+  renderAttendanceHistory(enrollment);
+}
+
+function renderNextLessons(enrollment) {
+  if (enrollment.lessons.length === 0) return;
+
+  document.getElementById("courseDetail").insertAdjacentHTML("beforeend", `
+    <div class="nextLesson">
+      <div class="rowTitle">ตารางเรียนถัดไป</div>
+      ${enrollment.lessons.map((lesson) => `
+        <div class="muted">${formatDateTime(lesson.startsAt)} | ผู้สอน: ${escapeHtml(lesson.instructorName)}</div>
+      `).join("")}
+    </div>
+  `);
+}
+
+function renderAttendanceHistory(enrollment) {
+  const rows = enrollment.attendances.map((attendance) => ({ enrollment, attendance }));
 
   if (rows.length === 0) {
     document.getElementById("attendanceHistory").innerHTML = empty("ยังไม่มีประวัติ");
@@ -89,4 +142,22 @@ function empty(text) {
 
 function courseUnit(course) {
   return course?.courseType === "HOUR" ? "ชม." : "ครั้ง";
+}
+
+function selectDefaultEnrollmentId(enrollments) {
+  return enrollments[0]?.enrollmentId ?? null;
+}
+
+function statusLabel(status) {
+  const labels = {
+    ACTIVE: "กำลังเรียน",
+    PAUSED: "พักไว้",
+    COMPLETED: "จบแล้ว",
+    CANCELLED: "ยกเลิก"
+  };
+  return labels[status] || status;
+}
+
+function statusClass(status) {
+  return status === "ACTIVE" ? "active" : "inactive";
 }

@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:local": "APP_ENV=local tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js",
+    "start:production": "APP_ENV=production node dist/src/server.js",
     "check": "tsc --noEmit",
     "sheets:check": "tsx src/check-sheets.ts",
     "sheets:validate": "tsx src/validate-sheets.ts",
