@@ -415,7 +415,7 @@ button.secondary {
 
 .historyItem {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   border: 1px solid #e4eaef;
   border-radius: 8px;
   background: #ffffff;
@@ -449,8 +449,12 @@ button.secondary {
 }
 
 .scoreLine {
-  border-top: 1px solid #eef2f5;
-  padding-top: 8px;
+  flex-wrap: wrap;
+}
+
+.historyDivider {
+  height: 1px;
+  background: #eef2f5;
 }
 
 .scoreLine strong {
@@ -598,8 +602,9 @@ button.secondary {
 
   .historyItemMeta,
   .scoreLine {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 4px;
   }
 

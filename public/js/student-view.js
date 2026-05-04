@@ -222,16 +222,17 @@ function renderAttendanceHistory(enrollment) {
                   <strong>ครั้งที่ ${formatNumber(lessonNumber)}</strong>
                   <span>${formatNumber(attendance.classesUsed)} ${courseUnit(enrollment.course)}</span>
                 </div>
-                <div class="historyItemMeta">
-                  <span>${formatDate(attendance.checkedInAt)}</span>
-                  <span>คุณครู: ${escapeHtml(attendance.instructorName)}</span>
-                </div>
                 ${scoreText(attendance) ? `
                   <div class="scoreLine">
                     <span>คะแนนให้ความร่วมมือ</span>
                     <strong>${scoreText(attendance)}</strong>
                   </div>
                 ` : ""}
+                <div class="historyDivider"></div>
+                <div class="historyItemMeta">
+                  <span>${formatDate(attendance.checkedInAt)}</span>
+                  <span>คุณครู: ${escapeHtml(attendance.instructorName)}</span>
+                </div>
               </article>
             `;
           }).join("")}
@@ -297,7 +298,7 @@ function studentAgeText(user) {
 
 function scoreText(attendance) {
   if (!Number.isFinite(Number(attendance.score))) return "";
-  return `ครูประเมิน ${formatNumber(attendance.score)}/5`;
+  return `ครูประเมิน ${formatNumber(attendance.score)}/5 คะแนน`;
 }
 
 function calculateAge(birthDate) {
