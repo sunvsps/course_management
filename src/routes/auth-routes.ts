@@ -47,20 +47,34 @@ export async function authRoutes(app: FastifyInstance) {
       email: idProfile?.email
     });
     const db = await loadSheetDatabase();
-    const linkedUserId = db.userLineProfiles.find((link) => link.lineProfileId === profile.lineProfileId)?.userId;
-    const user = db.users.find((item) => item.userId === linkedUserId)
+    const linkedUserIds = db.userLineProfiles
+      .filter((link) => link.lineProfileId === profile.lineProfileId)
+      .map((link) => link.userId);
+    const linkedUsers = db.users.filter((item) => item.userId && linkedUserIds.includes(item.userId));
+    const user = linkedUsers.find((item) => item.role === "INSTRUCTOR")
+      ?? linkedUsers.find((item) => item.role === "ADMIN")
+      ?? linkedUsers.find((item) => item.role === "STUDENT")
       ?? db.users.find((item) => item.lineProfileId === profile.lineProfileId);
 
     if (!user?.userId) {
       throw new Error("LINE profile is not linked to a student userId yet");
     }
 
+    const role = user.role || "STUDENT";
+    const isTeacher = role === "INSTRUCTOR" || role === "ADMIN";
+
     const token = signSession({
       userId: user.userId,
       displayName: user.displayName || profile.displayName,
-      lineProfileId: profile.lineProfileId
+      lineProfileId: profile.lineProfileId,
+      role,
+      instructorName: isTeacher ? user.displayName || profile.displayName : undefined
     });
 
-    return { token };
+    return {
+      token,
+      role,
+      redirectPath: isTeacher ? "/teacher" : "/student"
+    };
   });
 }
