@@ -197,7 +197,7 @@ function renderUserLineProfiles() {
         <label>User${select("userId", allUserOptions(), editing?.userId ?? "")}</label>
         <label>Line Profile${select("lineProfileId", lineProfileOptions(), editing?.lineProfileId ?? "")}</label>
         <label>Relationship<input name="relationship" value="${escapeHtml(editing?.relationship ?? "")}" placeholder="father, mother, parent" /></label>
-        <label>Primary${select("isPrimary", [["false", "No"], ["true", "Yes"]], editing?.isPrimary ? "true" : "false")}</label>
+        <label>Primary${select("isPrimary", [["true", "Yes"], ["false", "No"], ], editing?.isPrimary ? "true" : "false")}</label>
         <div class="adminFormActions">
           <button type="submit">${editing ? "บันทึกการแก้ไข" : "เพิ่ม Link"}</button>
           ${editing ? `<button class="secondary" type="button" data-cancel-edit>ยกเลิก</button>` : ""}
