@@ -13,7 +13,7 @@ clearSessionFromQuery();
 main().catch((error) => {
   document.getElementById("loadingView").textContent = "โหลดข้อมูลไม่สำเร็จ";
   console.error(error);
-  showToast("รอคุณครูเอิร์ธเชื่อมต่อข้อมูลกับระบบหลังบ้านครับ");
+  showToast("รอคุณครูเอิร์ธเชื่อมต่อข้อมูลสักครู่ครับ");
 });
 
 async function main() {
