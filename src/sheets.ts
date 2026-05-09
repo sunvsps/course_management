@@ -108,7 +108,7 @@ export async function upsertLineProfile(profile: IncomingLineProfile) {
       createdAt: existing.createdAt || now,
       updatedAt: now
     };
-    await updateSheetRow("LineProfiles", existingIndex + 2, lineProfileToValues(updated));
+    // await updateSheetRow("LineProfiles", existingIndex + 2, lineProfileToValues(updated));
     return updated;
   }
 
