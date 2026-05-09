@@ -1,4 +1,4 @@
-<!doctype html>
+<!-- <!doctype html>
 <html lang="th">
   <head>
     <meta charset="utf-8" />
@@ -13,5 +13,41 @@
       <div id="toast" class="toast hidden"></div>
     </main>
     <script type="module" src="/js/entry.js"></script>
+  </body>
+</html> -->
+
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Student Classes</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Student Card</p>
+          <h1>ข้อมูลการเรียน</h1>
+        </div>
+        <button id="logoutButton" class="secondary hidden" type="button">ออกจากระบบ</button>
+      </section>
+
+      <section id="loadingView" class="status">กำลังโหลดข้อมูล...</section>
+
+      <section id="studentView" class="hidden">
+        <div id="profile" class="profile"></div>
+        <h2 id="courseSectionTitle">คอร์สของฉัน</h2>
+        <div id="balanceCards" class="courseRail"></div>
+
+        <section id="courseDetail" class="courseDetail hidden"></section>
+        <div id="attendanceHistory"></div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+    <script type="module" src="/js/main.js"></script>
   </body>
 </html>
