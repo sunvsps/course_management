@@ -5,7 +5,7 @@ const db = await loadSheetDatabase();
 const issues: string[] = [];
 
 for (const user of db.users) {
-  if (!user.userId) issues.push(`Users: missing userId for ${user.displayName || user.lineProfileId || "(blank user)"}`);
+  if (!user.userId) issues.push(`Users: missing userId for ${user.displayName || "(blank user)"}`);
 }
 
 for (const link of db.userLineProfiles) {

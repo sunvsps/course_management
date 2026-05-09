@@ -719,7 +719,6 @@ function toUserLineProfile(row: Record<string, string>): UserLineProfileRow {
 function toUser(row: Record<string, string>): UserRow {
   return {
     userId: row.userId,
-    lineProfileId: row.lineProfileId,
     displayName: row.displayName,
     pictureUrl: row.pictureUrl,
     birthDate: row.birthDate,
@@ -804,7 +803,6 @@ function toAttendance(row: Record<string, string>): AttendanceRow {
 function userToSheetObject(user: UserRow) {
   return {
     userId: user.userId,
-    lineProfileId: user.lineProfileId ?? "",
     displayName: user.displayName,
     pictureUrl: user.pictureUrl ?? "",
     birthDate: user.birthDate ?? "",

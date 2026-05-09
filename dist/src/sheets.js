@@ -564,7 +564,6 @@ function toUserLineProfile(row) {
 function toUser(row) {
     return {
         userId: row.userId,
-        lineProfileId: row.lineProfileId,
         displayName: row.displayName,
         pictureUrl: row.pictureUrl,
         birthDate: row.birthDate,
@@ -643,7 +642,6 @@ function toAttendance(row) {
 function userToSheetObject(user) {
     return {
         userId: user.userId,
-        lineProfileId: user.lineProfileId ?? "",
         displayName: user.displayName,
         pictureUrl: user.pictureUrl ?? "",
         birthDate: user.birthDate ?? "",

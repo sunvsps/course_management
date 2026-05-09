@@ -92,13 +92,7 @@ function findRelatedStudents(db: SheetDatabase, user: UserRow, lineProfileId?: s
     return relatedStudents.length > 0 ? relatedStudents : [user];
   }
 
-  if (!user.lineProfileId) return [user];
-
-  const relatedStudents = db.users
-    .filter((item) => item.role === "STUDENT" && item.lineProfileId === user.lineProfileId && item.userId)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
-
-  return relatedStudents.length > 0 ? relatedStudents : [user];
+  return [user];
 }
 
 function toPublicUser(user: UserRow) {

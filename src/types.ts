@@ -19,7 +19,6 @@ export type LineProfileRow = {
 
 export type UserRow = {
   userId?: string;
-  lineProfileId?: string;
   displayName: string;
   pictureUrl?: string;
   birthDate?: string;

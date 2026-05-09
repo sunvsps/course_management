@@ -53,8 +53,7 @@ export async function authRoutes(app: FastifyInstance) {
     const linkedUsers = db.users.filter((item) => item.userId && linkedUserIds.includes(item.userId));
     const user = linkedUsers.find((item) => item.role === "INSTRUCTOR")
       ?? linkedUsers.find((item) => item.role === "ADMIN")
-      ?? linkedUsers.find((item) => item.role === "STUDENT")
-      ?? db.users.find((item) => item.lineProfileId === profile.lineProfileId);
+      ?? linkedUsers.find((item) => item.role === "STUDENT");
 
     if (!user?.userId) {
       throw new Error("LINE profile is not linked to a student userId yet");

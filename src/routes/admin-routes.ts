@@ -33,7 +33,6 @@ const idParamSchema = z.object({
 
 const userSchema = z.object({
   userId: z.string().trim().optional().default(""),
-  lineProfileId: z.string().trim().optional().default(""),
   displayName: z.string().trim().min(1),
   pictureUrl: z.string().trim().optional().default(""),
   birthDate: z.string().trim().optional().default(""),
@@ -228,7 +227,6 @@ function getId(request: FastifyRequest) {
 function toUserRow(input: z.infer<typeof userSchema>, fixedUserId?: string): UserRow {
   return {
     userId: fixedUserId || input.userId || undefined,
-    lineProfileId: input.lineProfileId || undefined,
     displayName: input.displayName,
     pictureUrl: input.pictureUrl || undefined,
     birthDate: input.birthDate || undefined,
