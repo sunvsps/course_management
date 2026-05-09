@@ -15,13 +15,13 @@ const detailView = document.getElementById("studentView");
 const teacherViewNav = document.getElementById("teacherViewNav");
 
 const scoreFields = [
-  ["hyperactiveScore", "อยู่ไม่นิ่ง", "นิ่งมาก", "อยู่ไม่นิ่งมาก", "observe"],
-  ["distractionScore", "วอกแวกง่าย", "จดจ่อดี", "วอกแวกมาก", "observe"],
-  ["attentionSpanScore", "สมาธิในการเรียน", "น้อย", "ดีมาก", "skill"],
-  ["selfControlScore", "ควบคุมตัวเอง", "ต้องช่วยมาก", "ทำได้ดี", "skill"],
-  ["selfEsteemScore", "ความมั่นใจ", "ไม่มั่นใจ", "มั่นใจมาก", "skill"],
-  ["timeManagementScore", "จัดการเวลา", "ต้องช่วยมาก", "ทำได้ดี", "skill"],
-  ["behaviorScore", "พฤติกรรมโดยรวม", "ต้องดูแลมาก", "ดีมาก", "skill"]
+  ["hyperactiveScore", "Hyperactive | อยู่ไม่นิ่ง", "นิ่งมาก", "อยู่ไม่นิ่งมาก", "observe"],
+  ["distractionScore", "Distraction | วอกแวกง่าย", "จดจ่อดี", "วอกแวกมาก", "observe"],
+  ["attentionSpanScore", "Attention | สมาธิในการเรียน", "น้อย", "ดีมาก", "skill"],
+  ["selfControlScore", "Self Control | ควบคุมตัวเอง", "ต้องช่วยมาก", "ทำได้ดี", "skill"],
+  ["selfEsteemScore", "Self Esteem | ความมั่นใจ", "ไม่มั่นใจ", "มั่นใจมาก", "skill"],
+  ["timeManagementScore", "Time Managment | จัดการเวลา", "ต้องช่วยมาก", "ทำได้ดี", "skill"],
+  ["behaviorScore", "Behavior | พฤติกรรมโดยรวม", "ต้องดูแลมาก", "ดีมาก", "skill"]
 ];
 
 loginForm.onsubmit = async (event) => {
