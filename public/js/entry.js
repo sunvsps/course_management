@@ -4,6 +4,8 @@ import { showToast } from "./toast.js";
 
 const status = document.getElementById("entryStatus");
 
+clearSessionFromQuery();
+
 main().catch((error) => {
   status.textContent = "เข้าสู่ระบบไม่สำเร็จ";
   showToast(error.message || "เกิดข้อผิดพลาด");
