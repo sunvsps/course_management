@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teacher Classes</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Teacher Portal</p>
+          <h1>ข้อมูลนักเรียน</h1>
+        </div>
+        <button id="logoutButton" class="secondary hidden" type="button">ออกจากระบบ</button>
+      </section>
+
+      <section id="teacherLogin" class="loginPanel">
+        <div>
+          <p class="eyebrow">Teacher</p>
+          <h2>เข้าสู่ระบบครูผู้สอน</h2>
+        </div>
+        <form id="teacherLoginForm" class="adminForm">
+          <label>
+            Username
+            <input name="username" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button type="submit">เข้าสู่ระบบ</button>
+        </form>
+      </section>
+
+      <section id="loadingView" class="status hidden">กำลังโหลดข้อมูล...</section>
+
+      <nav id="teacherViewNav" class="teacherViewNav hidden" aria-label="Teacher views">
+        <button class="teacherViewButton active" type="button" data-teacher-view="checkin">Check-in</button>
+        <button class="teacherViewButton" type="button" data-teacher-view="detail">Student Detail</button>
+      </nav>
+
+      <section id="teacherCheckin" class="adminPanel hidden"></section>
+
+      <section id="studentView" class="hidden">
+        <div id="profile" class="profile"></div>
+        <h2 id="courseSectionTitle">คอร์สที่สอน</h2>
+        <div id="balanceCards" class="courseRail"></div>
+
+        <section id="courseDetail" class="courseDetail hidden"></section>
+        <div id="attendanceHistory"></div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+    <script type="module" src="/js/teacher.js"></script>
+  </body>
+</html>

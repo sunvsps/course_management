@@ -6,6 +6,7 @@ import { adminRoutes } from "./routes/admin-routes.js";
 import { authRoutes } from "./routes/auth-routes.js";
 import { configRoutes } from "./routes/config-routes.js";
 import { healthRoutes } from "./routes/health-routes.js";
+import { instructorRoutes } from "./routes/instructor-routes.js";
 import { studentRoutes } from "./routes/student-routes.js";
 
 export async function buildApp() {
@@ -27,11 +28,11 @@ export async function buildApp() {
   });
 
   app.get("/student", async (_request, reply) => {
-    return reply.sendFile("index.html");
+    return reply.sendFile("student.html");
   });
 
   app.get("/student/", async (_request, reply) => {
-    return reply.sendFile("index.html");
+    return reply.sendFile("student.html");
   });
 
   app.get("/admin", async (_request, reply) => {
@@ -42,10 +43,19 @@ export async function buildApp() {
     return reply.sendFile("admin.html");
   });
 
+  app.get("/teacher", async (_request, reply) => {
+    return reply.sendFile("teacher.html");
+  });
+
+  app.get("/teacher/", async (_request, reply) => {
+    return reply.sendFile("teacher.html");
+  });
+
   await app.register(healthRoutes);
   await app.register(configRoutes);
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(adminRoutes, { prefix: "/api/admin" });
+  await app.register(instructorRoutes, { prefix: "/api/teacher" });
   await app.register(studentRoutes, { prefix: "/api" });
 
   return app;

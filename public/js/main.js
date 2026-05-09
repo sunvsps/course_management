@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { clearSessionToken, getSessionToken, setSessionToken } from "./session.js";
+import { clearSessionToken, getSessionToken, setSessionToken, setTeacherSessionToken } from "./session.js";
 import { renderStudentDashboard } from "./student-view.js";
 import { showToast } from "./toast.js";
 
@@ -12,7 +12,8 @@ clearSessionFromQuery();
 
 main().catch((error) => {
   document.getElementById("loadingView").textContent = "โหลดข้อมูลไม่สำเร็จ";
-  showToast(error.message || "เกิดข้อผิดพลาด");
+  console.error(error);
+  showToast("รอคุณครูเอิร์ธเชื่อมต่อข้อมูลสักครู่ครับ");
 });
 
 async function main() {
@@ -23,7 +24,11 @@ async function main() {
       const { token } = await api("/api/auth/demo", { method: "POST", auth: false });
       setSessionToken(token);
     } else {
-      await loginWithLiff(config.liffId);
+      const auth = await loginWithLiff(config.liffId);
+      if (auth?.redirectPath && auth.redirectPath !== window.location.pathname) {
+        window.location.replace(auth.redirectPath);
+        return;
+      }
     }
   }
 
@@ -47,13 +52,19 @@ async function loginWithLiff(liffId) {
     throw new Error("ไม่พบ LINE token กรุณาตรวจ LIFF scope และลองเปิดใหม่อีกครั้ง");
   }
 
-  const { token } = await api("/api/auth/liff", {
+  const auth = await api("/api/auth/liff", {
     method: "POST",
     auth: false,
     body: { idToken, accessToken }
   });
 
-  setSessionToken(token);
+  if (auth.redirectPath === "/teacher") {
+    setTeacherSessionToken(auth.token);
+  } else {
+    setSessionToken(auth.token);
+  }
+
+  return auth;
 }
 
 function clearSessionFromQuery() {

@@ -105,7 +105,7 @@ def add_key_table(doc):
     )
     rows = [
         ["Tab", "ID หลัก", "ใช้เชื่อมกับ", "หน้าที่"],
-        ["LineProfiles", "lineProfileId", "Users.lineProfileId", "เก็บข้อมูลจาก LINE อัตโนมัติหลังผู้เรียน login"],
+        ["LineProfiles", "lineProfileId", "UserLineProfiles.lineProfileId", "เก็บข้อมูลจาก LINE อัตโนมัติหลังผู้เรียน login"],
         ["Users", "userId", "Enrollments.userId", "รายชื่อผู้เรียน/ผู้ใช้หลักของระบบ"],
         ["Courses", "courseId", "Enrollments.courseId", "ข้อมูลคอร์ส เช่น รายครั้งหรือรายชั่วโมง"],
         ["Enrollments", "enrollmentId", "Lessons / Attendances", "การซื้อคอร์สของผู้เรียน 1 คน ต่อ 1 คอร์ส"],
@@ -156,11 +156,12 @@ def add_workflows(doc):
         [
             "ให้ผู้เรียนเปิด LIFF/login LINE ก่อน 1 ครั้ง เพื่อให้ระบบสร้างแถวใน tab LineProfiles",
             "ไปที่ tab LineProfiles แล้ว copy ค่า lineProfileId ของผู้เรียน",
-            "ไปที่ tab Users แล้วเพิ่มแถวใหม่: userId, lineProfileId, displayName, pictureUrl, role",
+            "ไปที่ tab Users แล้วเพิ่มแถวใหม่: userId, displayName, pictureUrl, role",
+            "ไปที่ tab UserLineProfiles แล้วผูก userId กับ lineProfileId ที่ copy มา",
             "role สำหรับผู้เรียนให้ใส่ STUDENT",
         ],
     )
-    add_code(doc, "Users: user-001 | <lineProfileId จาก LineProfiles> | คุณซัน | | STUDENT")
+    add_code(doc, "Users: user-001 | คุณซัน | | STUDENT\nUserLineProfiles: ulp-001 | user-001 | <lineProfileId จาก LineProfiles> | mother | TRUE")
 
     add_heading(doc, "2. เพิ่มคอร์สใหม่", 2)
     add_bullets(
@@ -273,7 +274,7 @@ def build_doc():
 
     add_paragraph(
         doc,
-        "หลักคิดสำคัญ: ระบบใช้ userId เป็นตัวหลักของผู้เรียน ส่วน lineProfileId มีไว้เชื่อมบัญชี LINE กับผู้เรียนใน tab Users เท่านั้น",
+        "หลักคิดสำคัญ: ระบบใช้ userId เป็นตัวหลักของผู้เรียน ส่วน lineProfileId มีไว้เชื่อมบัญชี LINE กับผู้เรียนผ่าน tab UserLineProfiles เท่านั้น",
         bold_prefix="หลักคิดสำคัญ:",
     )
 

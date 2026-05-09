@@ -14,6 +14,7 @@ npm run dev:local
 
 ```text
 http://localhost:3001/student
+http://localhost:3001/teacher
 http://localhost:3001/admin
 ```
 
@@ -24,6 +25,10 @@ http://localhost:3001/admin
 ```env
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin123456"
+TEACHER_USERNAME="teacher"
+TEACHER_PASSWORD="teacher123456"
+TEACHER_USER_ID="teacher-earth"
+TEACHER_DISPLAY_NAME="ครูเอิร์ธ"
 ```
 
 เวลา deploy บน Render ให้ตั้ง `ADMIN_PASSWORD` เป็นรหัสจริงที่เดายาก และไม่ต้องใส่เครื่องหมาย `"` ในหน้า Environment ของ Render
@@ -89,28 +94,31 @@ lineProfileId,lineUserId,displayName,pictureUrl,statusMessage,email,createdAt,up
 ### Users
 
 ```csv
-userId,lineProfileId,displayName,birthDate,role
-student-demo,line-profile-demo,Demo Student,2018-01-15,STUDENT
+userId,displayName,pictureUrl,birthDate,role,createdAt,updatedAt
+student-demo,Demo Student,,2018-01-15,STUDENT,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
 ระบบใช้ `birthDate` เพื่อคำนวณอายุเป็นปีและเดือนให้อัตโนมัติ
 
-ถ้าผู้ปกครอง 1 คนมีลูกหลายคน ให้ใส่ `lineProfileId` เดียวกันใน `Users` หลายแถว เช่น:
+### UserLineProfiles
+
+ตารางกลางสำหรับผูกผู้ใช้ในระบบกับ LINE profile รองรับผู้ปกครองหลายคนต่อเด็กหนึ่งคน และ LINE profile เดียวดูแลเด็กหลายคน
 
 ```csv
-userId,lineProfileId,displayName,birthDate,role
-student-a,line-profile-mom-001,Nong A,2018-01-15,STUDENT
-student-b,line-profile-mom-001,Nong B,2020-08-20,STUDENT
+userLineProfileId,userId,lineProfileId,relationship,isPrimary,createdAt,updatedAt
+ulp-001,student-a,line-profile-mom-001,mother,TRUE,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
+ulp-002,student-a,line-profile-dad-001,father,FALSE,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
+ulp-003,student-b,line-profile-mom-001,mother,TRUE,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
-เมื่อผู้ปกครองเปิดหน้า `/student` ระบบจะดึงนักเรียนทุกคนที่มี `lineProfileId` เดียวกันมาให้เลือกอัตโนมัติ
+เมื่อผู้ปกครองเปิดหน้า `/student` ระบบจะดึงนักเรียนทุกคนที่ผูกกับ LINE profile ที่ login อยู่มาให้เลือกอัตโนมัติ
 
 ### Courses
 
 ```csv
-courseId,name,courseType,totalClasses
-course-10,Private Course 10 Classes,CLASS,10
-hour-10,Private Course 10 Hours,HOUR,10
+courseId,name,courseType,totalClasses,createdAt,updatedAt
+course-10,Private Course 10 Classes,CLASS,10,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
+hour-10,Private Course 10 Hours,HOUR,10,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
 `courseType` ใช้กำหนดหน่วยที่แสดงบนหน้านักเรียน:
@@ -121,29 +129,31 @@ hour-10,Private Course 10 Hours,HOUR,10
 ### Enrollments
 
 ```csv
-enrollmentId,userId,courseId,purchasedClasses,status
-enroll-demo,student-demo,course-10,,ACTIVE
+enrollmentId,userId,courseId,instructorId,purchasedClasses,remainingClasses,status,createdAt,updatedAt
+enroll-demo,student-demo,course-10,teacher-earth,,10,ACTIVE,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
 ระบบจะใช้ `userId` เป็นหลักในการผูก enrollment กับ tab `Users`
+`instructorId` อ้างถึง `Users.userId` ของคุณครู เช่น `teacher-earth` ที่มี role เป็น `INSTRUCTOR`
 ถ้า `purchasedClasses` ว่าง ระบบจะใช้ `Courses.totalClasses` แทน
 จำนวนคงเหลือจะถูกคำนวณอัตโนมัติจาก `purchasedClasses - Attendances.classesUsed` และไม่อ่านค่าจาก `Enrollments.remainingClasses`
+หน้า `/teacher` จะใช้ `Enrollments.instructorId` เพื่อเลือกเฉพาะนักเรียนของครูคนนั้น
 
 ### Lessons
 
 ```csv
-lessonId,enrollmentId,instructorName,startsAt,endsAt,status
-lesson-next,enroll-demo,Demo Teacher,2026-05-04T10:00:00+07:00,2026-05-04T11:00:00+07:00,SCHEDULED
+lessonId,enrollmentId,instructorName,startsAt,endsAt,status,createdAt,updatedAt
+lesson-next,enroll-demo,Demo Teacher,2026-05-04T10:00:00+07:00,2026-05-04T11:00:00+07:00,SCHEDULED,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
 ### Attendances
 
 ```csv
-attendanceId,enrollmentId,instructorName,checkedInAt,classesUsed,score,note
-att-1,enroll-demo,Demo Teacher,2026-04-28,1,5,เรียนครั้งที่ 1
+attendanceId,enrollmentId,instructorName,checkedInAt,classesUsed,hyperactiveScore,distractionScore,attentionSpanScore,selfControlScore,selfEsteemScore,timeManagementScore,behaviorScore,note,createdAt,updatedAt
+att-1,enroll-demo,Demo Teacher,2026-04-28,1,4,3.5,4.5,4,5,4,5,เรียนครั้งที่ 1,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
-`score` เป็น optional ถ้าว่างไว้ หน้าผู้เรียนจะไม่แสดงคะแนน
+คะแนนแต่ละช่องเป็น optional ถ้าว่างไว้ หน้าผู้เรียนจะไม่แสดงคะแนนช่องนั้น
 
 ## Connect Google Sheet
 
@@ -168,7 +178,7 @@ GOOGLE_SPREADSHEET_ID="..."
 - Backend verify `idToken` กับ LINE
 - Backend fetch LINE profile ด้วย `accessToken`
 - Backend upsert ข้อมูลลง tab `LineProfiles`
-- Admin ค่อยนำ `lineProfileId` จาก `LineProfiles` ไปใส่ใน tab `Users` เอง
+- Admin ค่อยสร้าง link ใน tab `UserLineProfiles` เพื่อผูก `lineProfileId` กับ `userId`
 
 ตั้ง scope ใน LIFF/LINE Login channel:
 
@@ -205,6 +215,10 @@ APP_BASE_URL=https://your-app.onrender.com
 SESSION_SECRET=...
 ADMIN_USERNAME=...
 ADMIN_PASSWORD=...
+TEACHER_USERNAME=...
+TEACHER_PASSWORD=...
+TEACHER_USER_ID=...
+TEACHER_DISPLAY_NAME=...
 APP_BASE_URL=https://your-app.onrender.com
 LIFF_ID=...
 LINE_LOGIN_CHANNEL_ID=...

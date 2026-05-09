@@ -6,18 +6,21 @@ import {
   createAttendanceRow,
   createCourseRow,
   createEnrollmentRow,
+  createUserLineProfileRow,
   createUserRow,
   deleteAttendanceRow,
   deleteCourseRow,
   deleteEnrollmentRow,
+  deleteUserLineProfileRow,
   deleteUserRow,
   loadSheetDatabase,
   updateAttendanceRow,
   updateCourseRow,
   updateEnrollmentRow,
+  updateUserLineProfileRow,
   updateUserRow
 } from "../sheets.js";
-import type { AttendanceRow, CourseRow, EnrollmentRow, UserRow } from "../types.js";
+import type { AttendanceRow, CourseRow, EnrollmentRow, UserLineProfileRow, UserRow } from "../types.js";
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -30,11 +33,21 @@ const idParamSchema = z.object({
 
 const userSchema = z.object({
   userId: z.string().trim().optional().default(""),
-  lineProfileId: z.string().trim().optional().default(""),
   displayName: z.string().trim().min(1),
   pictureUrl: z.string().trim().optional().default(""),
   birthDate: z.string().trim().optional().default(""),
   role: z.enum(["STUDENT", "INSTRUCTOR", "ADMIN"]).default("STUDENT")
+});
+
+const userLineProfileSchema = z.object({
+  userLineProfileId: z.string().trim().optional().default(""),
+  userId: z.string().trim().min(1),
+  lineProfileId: z.string().trim().min(1),
+  relationship: z.string().trim().optional().default(""),
+  isPrimary: z.preprocess(
+    (value) => value === true || value === "true" || value === "TRUE" || value === "1",
+    z.boolean().default(false)
+  )
 });
 
 const courseSchema = z.object({
@@ -48,6 +61,7 @@ const enrollmentSchema = z.object({
   enrollmentId: z.string().trim().optional().default(""),
   userId: z.string().trim().min(1),
   courseId: z.string().trim().min(1),
+  instructorId: z.string().trim().optional().default(""),
   purchasedClasses: z.preprocess(
     (value) => value === "" || value === null ? undefined : value,
     z.coerce.number().min(0).optional()
@@ -55,16 +69,25 @@ const enrollmentSchema = z.object({
   status: z.enum(["ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"]).default("ACTIVE")
 });
 
+const optionalScoreSchema = z.preprocess(
+  (value) => value === "" || value === null ? undefined : value,
+  z.coerce.number().min(0).max(5).optional()
+);
+
 const attendanceSchema = z.object({
   attendanceId: z.string().trim().optional().default(""),
   enrollmentId: z.string().trim().min(1),
   instructorName: z.string().trim().min(1),
   checkedInAt: z.string().trim().min(1),
   classesUsed: z.coerce.number().min(0),
-  score: z.preprocess(
-    (value) => value === "" || value === null ? undefined : value,
-    z.coerce.number().min(0).max(5).optional()
-  ),
+  score: optionalScoreSchema,
+  hyperactiveScore: optionalScoreSchema,
+  distractionScore: optionalScoreSchema,
+  attentionSpanScore: optionalScoreSchema,
+  selfControlScore: optionalScoreSchema,
+  selfEsteemScore: optionalScoreSchema,
+  timeManagementScore: optionalScoreSchema,
+  behaviorScore: optionalScoreSchema,
   note: z.string().trim().optional().default("")
 });
 
@@ -108,10 +131,30 @@ export async function adminRoutes(app: FastifyInstance) {
   app.delete("/users/:id", { preHandler: requireAdmin }, async (request, reply) => {
     const id = getId(request);
     const db = await loadSheetDatabase();
-    if (db.enrollments.some((enrollment) => enrollment.userId === id)) {
+    if (db.userLineProfiles.some((link) => link.userId === id)) {
+      return reply.code(400).send({ error: "Cannot delete user while user-line-profile links still reference it" });
+    }
+    if (db.enrollments.some((enrollment) => enrollment.userId === id || enrollment.instructorId === id)) {
       return reply.code(400).send({ error: "Cannot delete user while enrollments still reference this user" });
     }
     await deleteUserRow(id);
+    return { ok: true };
+  });
+
+  app.post("/user-line-profiles", { preHandler: requireAdmin }, async (request) => {
+    const link = toUserLineProfileRow(userLineProfileSchema.parse(request.body));
+    return { userLineProfile: await createUserLineProfileRow(link) };
+  });
+
+  app.put("/user-line-profiles/:id", { preHandler: requireAdmin }, async (request) => {
+    const id = getId(request);
+    const link = toUserLineProfileRow(userLineProfileSchema.parse(request.body), id);
+    return { userLineProfile: await updateUserLineProfileRow(id, link) };
+  });
+
+  app.delete("/user-line-profiles/:id", { preHandler: requireAdmin }, async (request) => {
+    const id = getId(request);
+    await deleteUserLineProfileRow(id);
     return { ok: true };
   });
 
@@ -184,11 +227,23 @@ function getId(request: FastifyRequest) {
 function toUserRow(input: z.infer<typeof userSchema>, fixedUserId?: string): UserRow {
   return {
     userId: fixedUserId || input.userId || undefined,
-    lineProfileId: input.lineProfileId || undefined,
     displayName: input.displayName,
     pictureUrl: input.pictureUrl || undefined,
     birthDate: input.birthDate || undefined,
     role: input.role
+  };
+}
+
+function toUserLineProfileRow(
+  input: z.infer<typeof userLineProfileSchema>,
+  fixedUserLineProfileId?: string
+): UserLineProfileRow {
+  return {
+    userLineProfileId: fixedUserLineProfileId || input.userLineProfileId || "",
+    userId: input.userId,
+    lineProfileId: input.lineProfileId,
+    relationship: input.relationship || undefined,
+    isPrimary: input.isPrimary
   };
 }
 
@@ -206,6 +261,7 @@ function toEnrollmentRow(input: z.infer<typeof enrollmentSchema>, fixedEnrollmen
     enrollmentId: fixedEnrollmentId || input.enrollmentId || "",
     userId: input.userId,
     courseId: input.courseId,
+    instructorId: input.instructorId || undefined,
     purchasedClasses: input.purchasedClasses ?? 0,
     remainingClasses: 0,
     status: input.status
@@ -220,6 +276,13 @@ function toAttendanceRow(input: z.infer<typeof attendanceSchema>, fixedAttendanc
     checkedInAt: input.checkedInAt,
     classesUsed: input.classesUsed,
     score: input.score,
+    hyperactiveScore: input.hyperactiveScore,
+    distractionScore: input.distractionScore,
+    attentionSpanScore: input.attentionSpanScore,
+    selfControlScore: input.selfControlScore,
+    selfEsteemScore: input.selfEsteemScore,
+    timeManagementScore: input.timeManagementScore,
+    behaviorScore: input.behaviorScore,
     note: input.note || undefined
   };
 }
@@ -241,11 +304,27 @@ function enrichDatabase(db: Awaited<ReturnType<typeof loadSheetDatabase>>) {
       purchasedClasses,
       remainingClasses,
       userDisplayName: usersById.get(enrollment.userId)?.displayName ?? "",
-      courseName: course?.name ?? ""
+      courseName: course?.name ?? "",
+      instructorId: enrollment.instructorId ?? "",
+      instructorName: enrollment.instructorId ? usersById.get(enrollment.instructorId)?.displayName ?? "" : ""
     };
   });
 
   return {
+    lineProfiles: db.lineProfiles
+      .map((profile) => ({
+        ...profile,
+        linkedUsers: db.userLineProfiles
+          .filter((link) => link.lineProfileId === profile.lineProfileId)
+          .map((link) => usersById.get(link.userId)?.displayName || link.userId)
+          .filter(Boolean)
+      }))
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()),
+    userLineProfiles: db.userLineProfiles.map((link) => ({
+      ...link,
+      userDisplayName: usersById.get(link.userId)?.displayName ?? "",
+      lineDisplayName: db.lineProfiles.find((profile) => profile.lineProfileId === link.lineProfileId)?.displayName ?? ""
+    })),
     users: db.users,
     courses: db.courses,
     enrollments: enrichedEnrollments,
@@ -257,7 +336,9 @@ function enrichDatabase(db: Awaited<ReturnType<typeof loadSheetDatabase>>) {
           userId: enrollment?.userId ?? "",
           userDisplayName: enrollment?.userId ? usersById.get(enrollment.userId)?.displayName ?? "" : "",
           courseId: enrollment?.courseId ?? "",
-          courseName: enrollment?.courseId ? coursesById.get(enrollment.courseId)?.name ?? "" : ""
+          courseName: enrollment?.courseId ? coursesById.get(enrollment.courseId)?.name ?? "" : "",
+          instructorId: enrollment?.instructorId ?? "",
+          enrollmentInstructorName: enrollment?.instructorId ? usersById.get(enrollment.instructorId)?.displayName ?? "" : ""
         };
       })
       .sort((a, b) => new Date(b.checkedInAt).getTime() - new Date(a.checkedInAt).getTime())

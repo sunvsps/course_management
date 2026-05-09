@@ -1,19 +1,41 @@
 import { escapeHtml, formatDate, formatNumber } from "./format.js";
 
 const tokenKey = "adminSessionToken";
+const attendancePageSize = 10;
 const navItems = [
   { id: "portal", label: "Portal" },
-  { id: "attendances", label: "Check-in" },
+  { id: "attendances", label: "Attendances" },
+  { id: "lineProfiles", label: "LineProfiles" },
+  { id: "userLineProfiles", label: "UserLineProfiles" },
   { id: "courses", label: "Courses" },
   { id: "enrollments", label: "Enrollments" },
   { id: "users", label: "Users" }
+];
+
+const scoreFields = [
+   ["hyperactiveScore", "Hyperactive | อยู่ไม่นิ่ง", "นิ่งมาก", "อยู่ไม่นิ่งมาก", "observe"],
+  ["distractionScore", "Distraction | วอกแวกง่าย", "จดจ่อดี", "วอกแวกมาก", "observe"],
+  ["attentionSpanScore", "Attention | สมาธิในการเรียน", "น้อย", "ดีมาก", "skill"],
+  ["selfControlScore", "Self Control | ควบคุมตัวเอง", "ต้องช่วยมาก", "ทำได้ดี", "skill"],
+  ["selfEsteemScore", "Self Esteem | ความมั่นใจ", "ไม่มั่นใจ", "มั่นใจมาก", "skill"],
+  ["timeManagementScore", "Time Managment | จัดการเวลา", "ต้องช่วยมาก", "ทำได้ดี", "skill"],
+  ["behaviorScore", "Behavior | พฤติกรรมโดยรวม", "ต้องดูแลมาก", "ดีมาก", "skill"]
 ];
 
 const state = {
   token: localStorage.getItem(tokenKey),
   view: "portal",
   editing: null,
-  data: null
+  data: null,
+  attendancePage: 1,
+  filters: {
+    lineProfiles: { search: "" },
+    userLineProfiles: { userId: "", lineProfileId: "" },
+    users: { role: "", search: "" },
+    courses: { courseType: "", search: "" },
+    enrollments: { instructorId: "", userId: "", courseId: "", status: "" },
+    attendances: { instructorId: "", userId: "", courseId: "" }
+  }
 };
 
 const loginView = document.getElementById("adminLogin");
@@ -97,6 +119,8 @@ function renderNav() {
 
 function renderCurrentView() {
   if (state.view === "attendances") return renderAttendances();
+  if (state.view === "lineProfiles") return renderLineProfiles();
+  if (state.view === "userLineProfiles") return renderUserLineProfiles();
   if (state.view === "courses") return renderCourses();
   if (state.view === "enrollments") return renderEnrollments();
   if (state.view === "users") return renderUsers();
@@ -111,23 +135,16 @@ function renderPortal() {
   content.innerHTML = `
     <section class="adminStats">
       ${statCard("ผู้เรียน", data.users.filter((user) => user.role === "STUDENT").length)}
+      ${statCard("LINE Profiles", data.lineProfiles.length)}
       ${statCard("คอร์ส", data.courses.length)}
       ${statCard("กำลังเรียน", activeEnrollments)}
-      ${statCard("ประวัติ Check-in", data.attendances.length)}
     </section>
     <section class="adminPanel">
       <div class="adminPanelHeader">
         <div>
-          <p class="eyebrow">Quick actions</p>
-          <h2>เมนูหลัก</h2>
+          <p class="eyebrow">Check-in</p>
         </div>
       </div>
-      <div class="adminActionGrid">
-        ${navItems.filter((item) => item.id !== "portal").map((item) => `
-          <button class="secondary adminActionButton" type="button" data-view-shortcut="${item.id}">
-            ${escapeHtml(item.label)}
-          </button>
-        `).join("")}
       </div>
     </section>
     <section class="adminPanel">
@@ -151,10 +168,61 @@ function renderPortal() {
   });
 }
 
+function renderLineProfiles() {
+  const lineProfiles = filteredLineProfiles();
+
+  content.innerHTML = `
+    ${panelHeader("LineProfiles", "ข้อมูลโปรไฟล์จาก LINE Login")}
+    <section class="adminPanel">
+      ${filterBar("lineProfiles", [
+        filterInput("search", "ค้นหา", state.filters.lineProfiles.search, "ชื่อ, LINE user ID, email")
+      ])}
+      ${lineProfileTable(lineProfiles)}
+    </section>
+  `;
+
+  bindFilters("lineProfiles");
+}
+
+function renderUserLineProfiles() {
+  const editing = state.editing?.type === "userLineProfile"
+    ? state.data.userLineProfiles.find((link) => link.userLineProfileId === state.editing.id)
+    : null;
+  const links = filteredUserLineProfiles();
+
+  content.innerHTML = `
+    ${panelHeader("UserLineProfiles", "ผูก LINE profile กับนักเรียนหรือผู้ใช้งาน")}
+    <section class="adminPanel">
+      <form class="adminForm adminFormGrid" data-form="user-line-profiles">
+        <label>User${select("userId", allUserOptions(), editing?.userId ?? "")}</label>
+        <label>Line Profile${select("lineProfileId", lineProfileOptions(), editing?.lineProfileId ?? "")}</label>
+        <label>Relationship<input name="relationship" value="${escapeHtml(editing?.relationship ?? "")}" placeholder="father, mother, parent" /></label>
+        <label>Primary${select("isPrimary", [["true", "Yes"]], editing?.isPrimary ? "true" : "false")}</label>
+        <div class="adminFormActions">
+          <button type="submit">${editing ? "บันทึกการแก้ไข" : "เพิ่ม Link"}</button>
+          ${editing ? `<button class="secondary" type="button" data-cancel-edit>ยกเลิก</button>` : ""}
+        </div>
+      </form>
+    </section>
+    <section class="adminPanel">
+      ${filterBar("userLineProfiles", [
+        filterSelect("userId", "User", [["", "ทุก user"], ...allUserOptions()], state.filters.userLineProfiles.userId),
+        filterSelect("lineProfileId", "Line Profile", [["", "ทุก LINE profile"], ...lineProfileOptions()], state.filters.userLineProfiles.lineProfileId)
+      ])}
+      ${userLineProfileTable(links)}
+    </section>
+  `;
+
+  bindCrudForm("userLineProfile", "/user-line-profiles", editing?.userLineProfileId);
+  bindFilters("userLineProfiles");
+  bindTableActions("userLineProfile", "/user-line-profiles");
+}
+
 function renderUsers() {
   const editing = state.editing?.type === "user"
     ? state.data.users.find((user) => user.userId === state.editing.id)
     : null;
+  const users = filteredUsers();
 
   content.innerHTML = `
     ${panelHeader("Users", "เพิ่ม แก้ไข ลบ ผู้เรียน/ผู้สอน/admin")}
@@ -164,7 +232,6 @@ function renderUsers() {
         <label>ชื่อ<input name="displayName" value="${escapeHtml(editing?.displayName ?? "")}" required /></label>
         <label>วันเกิด<input name="birthDate" type="date" value="${escapeHtml(editing?.birthDate ?? "")}" /></label>
         <label>Role${select("role", [["STUDENT", "STUDENT"], ["INSTRUCTOR", "INSTRUCTOR"], ["ADMIN", "ADMIN"]], editing?.role ?? "STUDENT")}</label>
-        <label>LINE Profile ID<input name="lineProfileId" value="${escapeHtml(editing?.lineProfileId ?? "")}" placeholder="ถ้ามี" /></label>
         <label>รูปภาพ URL<input name="pictureUrl" value="${escapeHtml(editing?.pictureUrl ?? "")}" placeholder="ถ้ามี" /></label>
         <div class="adminFormActions">
           <button type="submit">${editing ? "บันทึกการแก้ไข" : "เพิ่ม User"}</button>
@@ -173,11 +240,16 @@ function renderUsers() {
       </form>
     </section>
     <section class="adminPanel">
-      ${userTable(state.data.users)}
+      ${filterBar("users", [
+        filterSelect("role", "Role", [["", "ทุก role"], ["STUDENT", "STUDENT"], ["INSTRUCTOR", "INSTRUCTOR"], ["ADMIN", "ADMIN"]], state.filters.users.role),
+        filterInput("search", "ค้นหา", state.filters.users.search, "ชื่อหรือ User ID")
+      ])}
+      ${userTable(users)}
     </section>
   `;
 
   bindCrudForm("users", "/users", editing?.userId);
+  bindFilters("users");
   bindTableActions("user", "/users");
 }
 
@@ -185,12 +257,12 @@ function renderCourses() {
   const editing = state.editing?.type === "course"
     ? state.data.courses.find((course) => course.courseId === state.editing.id)
     : null;
+  const courses = filteredCourses();
 
   content.innerHTML = `
-    ${panelHeader("Courses", "จัดการรายครั้ง/รายชั่วโมง")}
     <section class="adminPanel">
       <form class="adminForm adminFormGrid" data-form="courses">
-        <label>Course ID<input name="courseId" value="${escapeHtml(editing?.courseId ?? "")}" ${editing ? "readonly" : ""} placeholder="เว้นว่างเพื่อให้ระบบสร้าง" /></label>
+        <label>Course ID<input name="courseId" value="${escapeHtml(editing?.courseId ?? "")}" readonly/></label>
         <label>ชื่อคอร์ส<input name="name" value="${escapeHtml(editing?.name ?? "")}" required /></label>
         <label>ประเภท${select("courseType", [["CLASS", "รายครั้ง"], ["HOUR", "รายชม."]], editing?.courseType ?? "CLASS")}</label>
         <label>จำนวนทั้งหมด<input name="totalClasses" type="number" min="0" step="0.5" value="${editing?.totalClasses ?? 10}" required /></label>
@@ -201,11 +273,16 @@ function renderCourses() {
       </form>
     </section>
     <section class="adminPanel">
-      ${courseTable(state.data.courses)}
+      ${filterBar("courses", [
+        filterSelect("courseType", "ประเภท", [["", "ทุกประเภท"], ["CLASS", "รายครั้ง"], ["HOUR", "รายชม."]], state.filters.courses.courseType),
+        filterInput("search", "ค้นหา", state.filters.courses.search, "ชื่อหรือ Course ID")
+      ])}
+      ${courseTable(courses)}
     </section>
   `;
 
   bindCrudForm("course", "/courses", editing?.courseId);
+  bindFilters("courses");
   bindTableActions("course", "/courses");
 }
 
@@ -213,14 +290,14 @@ function renderEnrollments() {
   const editing = state.editing?.type === "enrollment"
     ? state.data.enrollments.find((enrollment) => enrollment.enrollmentId === state.editing.id)
     : null;
+  const enrollments = filteredEnrollments();
 
   content.innerHTML = `
-    ${panelHeader("Enrollments", "ผูก User กับ Course และสถานะการเรียน")}
     <section class="adminPanel">
       <form class="adminForm adminFormGrid" data-form="enrollments">
-        <label>Enrollment ID<input name="enrollmentId" value="${escapeHtml(editing?.enrollmentId ?? "")}" ${editing ? "readonly" : ""} placeholder="เว้นว่างเพื่อให้ระบบสร้าง" /></label>
         <label>ผู้เรียน${select("userId", userOptions(), editing?.userId ?? "")}</label>
         <label>คอร์ส${select("courseId", courseOptions(), editing?.courseId ?? "")}</label>
+        <label>ครูผู้สอน${select("instructorId", [["", "เลือกครูผู้สอน"], ...instructorOptions()], editing?.instructorId ?? "")}</label>
         <label>จำนวนที่ซื้อ<input name="purchasedClasses" type="number" min="0" step="0.5" value="${editing?.purchasedClasses || ""}" placeholder="เว้นว่าง = ใช้จำนวนจาก Course" /></label>
         <label>สถานะ${select("status", [["ACTIVE", "กำลังเรียน"], ["PAUSED", "พักไว้"], ["COMPLETED", "จบแล้ว"], ["CANCELLED", "ยกเลิก"]], editing?.status ?? "ACTIVE")}</label>
         <div class="adminFormActions">
@@ -230,11 +307,18 @@ function renderEnrollments() {
       </form>
     </section>
     <section class="adminPanel">
-      ${enrollmentTable(state.data.enrollments)}
+      ${filterBar("enrollments", [
+        filterSelect("instructorId", "ครู", [["", "ครูทั้งหมด"], ...instructorOptions()], state.filters.enrollments.instructorId),
+        filterSelect("userId", "นักเรียน", [["", "นักเรียนทั้งหมด"], ...userOptions()], state.filters.enrollments.userId),
+        filterSelect("courseId", "คอร์ส", [["", "คอร์สทั้งหมด"], ...courseOptions()], state.filters.enrollments.courseId),
+        filterSelect("status", "สถานะ", [["", "ทุกสถานะ"], ["ACTIVE", "กำลังเรียน"], ["PAUSED", "พักไว้"], ["COMPLETED", "จบแล้ว"], ["CANCELLED", "ยกเลิก"]], state.filters.enrollments.status)
+      ])}
+      ${enrollmentTable(enrollments)}
     </section>
   `;
 
   bindCrudForm("enrollment", "/enrollments", editing?.enrollmentId);
+  bindFilters("enrollments");
   bindTableActions("enrollment", "/enrollments");
 }
 
@@ -242,30 +326,31 @@ function renderAttendances() {
   const editing = state.editing?.type === "attendance"
     ? state.data.attendances.find((attendance) => attendance.attendanceId === state.editing.id)
     : null;
+  const selectedUserId = selectedAttendanceUserId(editing);
+  const attendances = filteredAttendances();
+  const pageCount = Math.max(Math.ceil(attendances.length / attendancePageSize), 1);
+  state.attendancePage = Math.min(Math.max(state.attendancePage, 1), pageCount);
+  const pageRows = paginateRows(attendances, state.attendancePage, attendancePageSize);
 
   content.innerHTML = `
-    ${panelHeader("Check-in", "บันทึกและจัดการประวัติการเข้าเรียน")}
     <section class="adminPanel">
-      <form class="adminForm adminFormGrid" data-form="attendances">
-        <label>Attendance ID<input name="attendanceId" value="${escapeHtml(editing?.attendanceId ?? "")}" ${editing ? "readonly" : ""} placeholder="เว้นว่างเพื่อให้ระบบสร้าง" /></label>
-        <label>Enrollment${select("enrollmentId", enrollmentOptions(), editing?.enrollmentId ?? "")}</label>
-        <label>คุณครู<input name="instructorName" value="${escapeHtml(editing?.instructorName ?? "")}" required /></label>
-        <label>วันที่ check-in<input name="checkedInAt" type="date" value="${escapeHtml(editing?.checkedInAt ?? todayInputValue())}" required /></label>
-        <label>ใช้ไป<input name="classesUsed" type="number" min="0" step="0.5" value="${editing?.classesUsed ?? 1}" required /></label>
-        <label>คะแนน / 5<input name="score" type="number" min="0" max="5" step="0.5" value="${editing?.score ?? ""}" /></label>
-        <label class="adminFormWide">Note<input name="note" value="${escapeHtml(editing?.note ?? "")}" /></label>
-        <div class="adminFormActions">
-          <button type="submit">${editing ? "บันทึกการแก้ไข" : "Check-in"}</button>
-          ${editing ? `<button class="secondary" type="button" data-cancel-edit>ยกเลิก</button>` : ""}
-        </div>
-      </form>
+      ${attendanceForm(editing, selectedUserId)}
     </section>
     <section class="adminPanel">
-      ${attendanceTable(state.data.attendances, true)}
+      ${filterBar("attendances", [
+        filterSelect("instructorId", "ครู", [["", "ครูทั้งหมด"], ...instructorOptions()], state.filters.attendances.instructorId),
+        filterSelect("userId", "นักเรียน", [["", "นักเรียนทั้งหมด"], ...userOptions()], state.filters.attendances.userId),
+        filterSelect("courseId", "คอร์ส", [["", "คอร์สทั้งหมด"], ...courseOptions()], state.filters.attendances.courseId)
+      ])}
+      ${attendanceTable(pageRows, true)}
+      ${attendancePagination(attendances.length, state.attendancePage, pageCount)}
     </section>
   `;
 
   bindCrudForm("attendance", "/attendances", editing?.attendanceId);
+  bindAttendanceStudentSelect(editing?.enrollmentId ?? "");
+  bindFilters("attendances");
+  bindAttendancePagination();
   bindTableActions("attendance", "/attendances");
 }
 
@@ -297,6 +382,73 @@ function bindCrudForm(type, path, editingId) {
       showToast(error.message);
     }
   };
+}
+
+function bindAttendanceStudentSelect(selectedEnrollmentId = "") {
+  const userSelect = content.querySelector('select[name="attendanceUserId"]');
+  const enrollmentSelect = content.querySelector('select[name="enrollmentId"]');
+  const usedInput = content.querySelector("[data-classes-used]");
+  const refreshUsage = () => updateCheckinUsage(userSelect?.value, enrollmentSelect?.value);
+
+  if (!userSelect || !enrollmentSelect) return;
+
+  userSelect.onchange = () => {
+    const options = enrollmentOptionsForUser(userSelect.value);
+    enrollmentSelect.innerHTML = options.map(([value, label], index) => `
+      <option value="${escapeHtml(value)}" ${index === 0 ? "selected" : ""}>${escapeHtml(label)}</option>
+    `).join("");
+    refreshUsage();
+  };
+
+  enrollmentSelect.onchange = refreshUsage;
+  if (usedInput) usedInput.oninput = refreshUsage;
+
+  if (selectedEnrollmentId) {
+    enrollmentSelect.value = selectedEnrollmentId;
+  }
+  refreshUsage();
+}
+
+function updateCheckinUsage(userId, enrollmentId) {
+  const enrollment = findEnrollment(enrollmentId);
+  const course = findCourse(enrollment?.courseId);
+  const usedInput = content.querySelector("[data-classes-used]");
+  const usedValue = usedInput?.value || 0;
+  const usage = content.querySelector("[data-course-usage]");
+  const summary = content.querySelector("[data-checkin-summary]");
+
+  if (usage) usage.innerHTML = courseUsagePanel(enrollment, course, usedValue);
+  if (summary) summary.innerHTML = checkinSummary(enrollment, course, usedValue, userId);
+}
+
+function bindAttendancePagination() {
+  content.querySelectorAll("[data-attendance-page]").forEach((button) => {
+    button.onclick = () => {
+      state.attendancePage = Number(button.dataset.attendancePage) || 1;
+      renderCurrentView();
+    };
+  });
+}
+
+function bindFilters(filterKey) {
+  content.querySelectorAll(`[data-filter-group="${filterKey}"] [data-filter-name]`).forEach((field) => {
+    field.oninput = () => {
+      state.filters[filterKey][field.dataset.filterName] = field.value;
+      if (filterKey === "attendances") state.attendancePage = 1;
+      renderCurrentView();
+    };
+    field.onchange = field.oninput;
+  });
+
+  content.querySelectorAll(`[data-filter-reset="${filterKey}"]`).forEach((button) => {
+    button.onclick = () => {
+      Object.keys(state.filters[filterKey]).forEach((key) => {
+        state.filters[filterKey][key] = "";
+      });
+      if (filterKey === "attendances") state.attendancePage = 1;
+      renderCurrentView();
+    };
+  });
 }
 
 function bindTableActions(type, path) {
@@ -359,6 +511,28 @@ function userTable(users) {
   ]));
 }
 
+function lineProfileTable(lineProfiles) {
+  return table(["Line Profile ID", "LINE User ID", "ชื่อ", "Email", "Linked users", "อัปเดตล่าสุด"], lineProfiles.map((profile) => [
+    profile.lineProfileId,
+    profile.lineUserId,
+    profile.displayName,
+    profile.email || "-",
+    profile.linkedUsers?.length ? profile.linkedUsers.join(", ") : "-",
+    profile.updatedAt || profile.createdAt || "-"
+  ]));
+}
+
+function userLineProfileTable(links) {
+  return table(["Link ID", "User", "Line Profile", "Relationship", "Primary", ""], links.map((link) => [
+    link.userLineProfileId,
+    link.userDisplayName || link.userId,
+    link.lineDisplayName || link.lineProfileId,
+    link.relationship || "-",
+    link.isPrimary ? "Yes" : "-",
+    rowActions(link.userLineProfileId)
+  ]));
+}
+
 function courseTable(courses) {
   return table(["Course ID", "ชื่อ", "ประเภท", "ทั้งหมด", ""], courses.map((course) => [
     course.courseId,
@@ -370,12 +544,13 @@ function courseTable(courses) {
 }
 
 function enrollmentTable(enrollments) {
-  return table(["Enrollment ID", "ผู้เรียน", "คอร์ส", "เหลือ", "สถานะ", ""], enrollments.map((enrollment) => {
+  return table(["Enrollment ID", "ผู้เรียน", "คอร์ส", "ครู", "เหลือ", "สถานะ", ""], enrollments.map((enrollment) => {
     const course = findCourse(enrollment.courseId);
     return [
       enrollment.enrollmentId,
       enrollment.userDisplayName || enrollment.userId,
       enrollment.courseName || enrollment.courseId,
+      enrollment.instructorName || "-",
       `${formatNumber(enrollment.remainingClasses)} / ${formatNumber(enrollment.purchasedClasses)} ${courseUnit(course)}`,
       statusLabel(enrollment.status),
       rowActions(enrollment.enrollmentId)
@@ -383,21 +558,189 @@ function enrollmentTable(enrollments) {
   }));
 }
 
+function attendanceForm(editing, selectedUserId) {
+  const selectedEnrollmentId = editing?.enrollmentId ?? enrollmentOptionsForUser(selectedUserId)[0]?.[0] ?? "";
+  const enrollment = findEnrollment(selectedEnrollmentId);
+  const course = findCourse(enrollment?.courseId);
+  const usedValue = editing?.classesUsed ?? 1;
+  const hasActiveEnrollment = Boolean(selectedEnrollmentId);
+
+  return `
+    <form class="checkinForm" data-form="attendances">
+      <div class="checkinHeader">
+        <div>
+          <p class="eyebrow">Check-in</p>
+          <h2>${editing ? "แก้ไขประวัติการเข้าเรียน" : "บันทึกการเข้าเรียน"}</h2>
+        </div>
+        <div class="checkinSummary" data-checkin-summary>
+          ${checkinSummary(enrollment, course, usedValue, selectedUserId)}
+        </div>
+      </div>
+
+      <section class="checkinSection">
+        <div class="checkinSectionTitle">
+          <h3>ข้อมูลคลาส</h3>
+        </div>
+        <div class="checkinClassGrid">
+          <label>คุณครู<input name="instructorName" value="${escapeHtml(editing?.instructorName ?? "ครูเอิร์ธ")}" required readonly /></label>
+          <label>นักเรียน${select("attendanceUserId", attendanceStudentOptions(), selectedUserId)}</label>
+          <label>วันที่ check-in<input name="checkedInAt" type="date" value="${escapeHtml(editing?.checkedInAt ?? todayInputValue())}" required /></label>
+          <label class="checkinWide">คอร์ส${hasActiveEnrollment ? select("enrollmentId", enrollmentOptionsForUser(selectedUserId), selectedEnrollmentId) : `<select name="enrollmentId" required disabled><option>ไม่มีคอร์ส ACTIVE</option></select>`}</label>
+          <div class="courseUsagePanel" data-course-usage>
+            ${courseUsagePanel(enrollment, course, usedValue)}
+          </div>
+          <label>ใช้ครั้งนี้<input name="classesUsed" data-classes-used type="number" min="0" step="0.5" value="${escapeHtml(usedValue)}" required /></label>
+        </div>
+      </section>
+
+      ${scoreInputs(editing)}
+
+      <section class="checkinSection">
+        <div class="checkinSectionTitle">
+          <h3>หมายเหตุ</h3>
+        </div>
+        <label class="noteField">
+          สรุปการเรียนวันนี้ / สิ่งที่ควรฝึกต่อ
+          <textarea name="note" rows="4" placeholder="เช่น วันนี้เรียนเรื่องอะไร, นักเรียนมีปัญหาอะไร, สิ่งที่ควรฝึกต่อ">${escapeHtml(editing?.note ?? "")}</textarea>
+        </label>
+      </section>
+
+      <div class="checkinFooter">
+        ${editing ? `<button class="secondary" type="button" data-cancel-edit>ยกเลิก</button>` : ""}
+        <button type="submit" ${hasActiveEnrollment ? "" : "disabled"}>${editing ? "บันทึกการแก้ไข" : "บันทึก Check-in"}</button>
+      </div>
+    </form>
+  `;
+}
+
+function scoreInputs(editing) {
+  const groups = [
+    ["observe", "พฤติกรรมที่ต้องสังเกต"],
+    ["skill", "ทักษะที่ทำได้ดี"]
+  ];
+
+  return `
+    <section class="checkinSection">
+      <div class="checkinSectionTitle">
+        <h3>ประเมินพฤติกรรม</h3>
+      </div>
+      <div class="scoreGroups">
+        ${groups.map(([group, title]) => `
+          <div class="scoreGroup">
+            <h4>${escapeHtml(title)}</h4>
+            ${scoreFields.filter(([, , , , fieldGroup]) => fieldGroup === group).map(([name, label, lowLabel, highLabel]) => scoreChoice(name, label, lowLabel, highLabel, editing?.[name])).join("")}
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function scoreChoice(name, label, lowLabel, highLabel, value) {
+  return `
+    <fieldset class="scoreChoice">
+      <legend>
+        <span>${escapeHtml(label)}</span>
+        <small>1 = ${escapeHtml(lowLabel)}, 5 = ${escapeHtml(highLabel)}</small>
+      </legend>
+      <div class="scoreScale" role="radiogroup" aria-label="${escapeHtml(label)}">
+        ${[1, 2, 3, 4, 5].map((score) => `
+          <label class="scoreOption">
+            <input type="radio" name="${escapeHtml(name)}" value="${score}" ${Number(value) === score ? "checked" : ""} />
+            <span>${score}</span>
+          </label>
+        `).join("")}
+      </div>
+      <div class="scoreHints"><span>${escapeHtml(lowLabel)}</span><span>${escapeHtml(highLabel)}</span></div>
+    </fieldset>
+  `;
+}
+
+function scoreSummary(attendance) {
+  const scores = scoreFields
+    .map(([name]) => Number(attendance[name]))
+    .filter((score) => Number.isFinite(score));
+
+  if (scores.length > 0) {
+    const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    return `${formatNumber(average)}/5 (${scores.length})`;
+  }
+
+  return Number.isFinite(Number(attendance.score)) ? `${formatNumber(attendance.score)}/5` : "-";
+}
+
+function checkinSummary(enrollment, course, usedValue, selectedUserId) {
+  const used = Number(usedValue);
+  const remaining = Number(enrollment?.remainingClasses);
+  const after = Number.isFinite(remaining) ? Math.max(remaining - (Number.isFinite(used) ? used : 0), 0) : 0;
+  const unit = courseUnit(course);
+  const student = state.data.users.find((user) => user.userId === selectedUserId);
+
+  return `
+    <strong>${escapeHtml(student?.displayName ?? enrollment?.userDisplayName ?? "-")}</strong>
+    <span>ใช้ครั้งนี้ ${formatNumber(Number.isFinite(used) ? used : 0)} ${unit}</span>
+    <span>คงเหลือหลังบันทึก ${formatNumber(after)} ${unit}</span>
+  `;
+}
+
+function courseUsagePanel(enrollment, course, usedValue) {
+  const used = Number(usedValue);
+  const remaining = Number(enrollment?.remainingClasses);
+  const after = Number.isFinite(remaining) ? Math.max(remaining - (Number.isFinite(used) ? used : 0), 0) : 0;
+  const unit = courseUnit(course);
+
+  return `
+    <div>
+      <span>คอร์ส</span>
+      <strong>${escapeHtml(enrollment?.courseName ?? enrollment?.courseId ?? "-")}</strong>
+    </div>
+    <div>
+      <span>คงเหลือปัจจุบัน</span>
+      <strong>${formatNumber(Number.isFinite(remaining) ? remaining : 0)} ${unit}</strong>
+    </div>
+    <div>
+      <span>คงเหลือหลังบันทึก</span>
+      <strong data-remaining-after>${formatNumber(after)} ${unit}</strong>
+    </div>
+  `;
+}
+
 function attendanceTable(attendances, withActions) {
-  return table(["วันที่", "ผู้เรียน", "คอร์ส", "คุณครู", "ใช้ไป", "คะแนน", withActions ? "" : null].filter(Boolean), attendances.map((attendance) => {
+  return table(["วันที่", "ผู้เรียน", "คอร์ส", "ครูประจำ", "คุณครูเช็คอิน", "ใช้ไป", "คะแนน", withActions ? "" : null].filter(Boolean), attendances.map((attendance) => {
     const course = findCourse(attendance.courseId);
     const cells = [
       formatDate(attendance.checkedInAt),
       attendance.userDisplayName || attendance.userId || "-",
       attendance.courseName || attendance.courseId || "-",
+      attendance.enrollmentInstructorName || "-",
       attendance.instructorName,
       `${formatNumber(attendance.classesUsed)} ${courseUnit(course)}`,
-      Number.isFinite(Number(attendance.score)) ? `${formatNumber(attendance.score)}/5` : "-"
+      scoreSummary(attendance)
     ];
 
     if (withActions) cells.push(rowActions(attendance.attendanceId));
     return cells;
   }));
+}
+
+function attendancePagination(totalRows, currentPage, pageCount) {
+  if (totalRows === 0) return "";
+
+  const start = (currentPage - 1) * attendancePageSize + 1;
+  const end = Math.min(currentPage * attendancePageSize, totalRows);
+
+  return `
+    <div class="pagination adminPagination">
+      <button class="secondary pageButton" type="button" data-attendance-page="${currentPage - 1}" ${currentPage <= 1 ? "disabled" : ""}>ก่อนหน้า</button>
+      <span>แสดง ${formatNumber(start)}-${formatNumber(end)} จาก ${formatNumber(totalRows)} รายการ | หน้า ${formatNumber(currentPage)} / ${formatNumber(pageCount)}</span>
+      <button class="secondary pageButton" type="button" data-attendance-page="${currentPage + 1}" ${currentPage >= pageCount ? "disabled" : ""}>ถัดไป</button>
+    </div>
+  `;
+}
+
+function paginateRows(rows, page, pageSize) {
+  const start = (page - 1) * pageSize;
+  return rows.slice(start, start + pageSize);
 }
 
 function table(headers, rows) {
@@ -445,9 +788,57 @@ function select(name, options, selectedValue) {
   `;
 }
 
+function filterBar(group, controls) {
+  return `
+    <div class="filterBar" data-filter-group="${escapeHtml(group)}">
+      ${controls.join("")}
+      <button class="secondary filterResetButton" type="button" data-filter-reset="${escapeHtml(group)}">ล้าง filter</button>
+    </div>
+  `;
+}
+
+function filterSelect(name, label, options, selectedValue) {
+  return `
+    <label class="filterControl">
+      <span>${escapeHtml(label)}</span>
+      <select data-filter-name="${escapeHtml(name)}">
+        ${options.map(([value, optionLabel]) => `
+          <option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(optionLabel)}</option>
+        `).join("")}
+      </select>
+    </label>
+  `;
+}
+
+function filterInput(name, label, value, placeholder = "") {
+  return `
+    <label class="filterControl">
+      <span>${escapeHtml(label)}</span>
+      <input data-filter-name="${escapeHtml(name)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" />
+    </label>
+  `;
+}
+
 function userOptions() {
   return state.data.users
     .filter((user) => user.role === "STUDENT")
+    .map((user) => [user.userId, `${user.displayName} (${user.userId})`]);
+}
+
+function allUserOptions() {
+  return state.data.users.map((user) => [user.userId, `${user.displayName} (${user.userId})`]);
+}
+
+function lineProfileOptions() {
+  return state.data.lineProfiles.map((profile) => [
+    profile.lineProfileId,
+    `${profile.displayName || profile.lineUserId} (${profile.lineProfileId})`
+  ]);
+}
+
+function instructorOptions() {
+  return state.data.users
+    .filter((user) => user.role === "INSTRUCTOR" || user.role === "ADMIN")
     .map((user) => [user.userId, `${user.displayName} (${user.userId})`]);
 }
 
@@ -462,6 +853,105 @@ function enrollmentOptions() {
       enrollment.enrollmentId,
       `${enrollment.userDisplayName || enrollment.userId} - ${enrollment.courseName || enrollment.courseId} เหลือ ${formatNumber(enrollment.remainingClasses)} ${courseUnit(course)}`
     ];
+  });
+}
+
+function attendanceStudentOptions() {
+  const enrolledUserIds = new Set(
+    state.data.enrollments
+      .filter((enrollment) => enrollment.status === "ACTIVE")
+      .map((enrollment) => enrollment.userId)
+  );
+  return state.data.users
+    .filter((user) => user.role === "STUDENT" && enrolledUserIds.has(user.userId))
+    .map((user) => [user.userId, user.displayName]);
+}
+
+function enrollmentOptionsForUser(userId) {
+  return state.data.enrollments
+    .filter((enrollment) => enrollment.userId === userId && enrollment.status === "ACTIVE")
+    .map((enrollment) => {
+      const course = findCourse(enrollment.courseId);
+      return [
+        enrollment.enrollmentId,
+        `${enrollment.courseName || enrollment.courseId} เหลือ ${formatNumber(enrollment.remainingClasses)} ${courseUnit(course)}`
+      ];
+    });
+}
+
+function selectedAttendanceUserId(editing) {
+  if (editing?.userId) return editing.userId;
+  return attendanceStudentOptions()[0]?.[0] ?? "";
+}
+
+function filteredLineProfiles() {
+  const search = state.filters.lineProfiles.search.trim().toLowerCase();
+  if (!search) return state.data.lineProfiles;
+
+  return state.data.lineProfiles.filter((profile) => {
+    return [
+      profile.lineProfileId,
+      profile.lineUserId,
+      profile.displayName,
+      profile.email,
+      profile.statusMessage,
+      ...(profile.linkedUsers ?? [])
+    ].join(" ").toLowerCase().includes(search);
+  });
+}
+
+function filteredUserLineProfiles() {
+  const filters = state.filters.userLineProfiles;
+
+  return state.data.userLineProfiles.filter((link) => {
+    if (filters.userId && link.userId !== filters.userId) return false;
+    if (filters.lineProfileId && link.lineProfileId !== filters.lineProfileId) return false;
+    return true;
+  });
+}
+
+function filteredUsers() {
+  const filters = state.filters.users;
+  const search = filters.search.trim().toLowerCase();
+
+  return state.data.users.filter((user) => {
+    if (filters.role && user.role !== filters.role) return false;
+    if (!search) return true;
+    return `${user.userId ?? ""} ${user.displayName ?? ""}`.toLowerCase().includes(search);
+  });
+}
+
+function filteredCourses() {
+  const filters = state.filters.courses;
+  const search = filters.search.trim().toLowerCase();
+
+  return state.data.courses.filter((course) => {
+    if (filters.courseType && course.courseType !== filters.courseType) return false;
+    if (!search) return true;
+    return `${course.courseId ?? ""} ${course.name ?? ""}`.toLowerCase().includes(search);
+  });
+}
+
+function filteredEnrollments() {
+  const filters = state.filters.enrollments;
+
+  return state.data.enrollments.filter((enrollment) => {
+    if (filters.instructorId && enrollment.instructorId !== filters.instructorId) return false;
+    if (filters.userId && enrollment.userId !== filters.userId) return false;
+    if (filters.courseId && enrollment.courseId !== filters.courseId) return false;
+    if (filters.status && enrollment.status !== filters.status) return false;
+    return true;
+  });
+}
+
+function filteredAttendances() {
+  const filters = state.filters.attendances;
+
+  return state.data.attendances.filter((attendance) => {
+    if (filters.instructorId && attendance.instructorId !== filters.instructorId) return false;
+    if (filters.userId && attendance.userId !== filters.userId) return false;
+    if (filters.courseId && attendance.courseId !== filters.courseId) return false;
+    return true;
   });
 }
 
@@ -491,6 +981,10 @@ function emptyAdmin(text) {
 
 function findCourse(courseId) {
   return state.data.courses.find((course) => course.courseId === courseId);
+}
+
+function findEnrollment(enrollmentId) {
+  return state.data.enrollments.find((enrollment) => enrollment.enrollmentId === enrollmentId);
 }
 
 function courseUnit(course) {
