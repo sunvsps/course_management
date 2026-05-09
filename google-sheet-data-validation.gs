@@ -19,23 +19,28 @@ function setupCourseManagementDropdowns() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const lineProfiles = requireSheet_(ss, "LineProfiles");
+  const userLineProfiles = requireSheet_(ss, "UserLineProfiles");
   const users = requireSheet_(ss, "Users");
   const courses = requireSheet_(ss, "Courses");
   const enrollments = requireSheet_(ss, "Enrollments");
   const lessons = requireSheet_(ss, "Lessons");
   const attendances = requireSheet_(ss, "Attendances");
 
+  applyOptionalDropdownFromRange_(userLineProfiles, "userId", users, "userId");
+  applyOptionalDropdownFromRange_(userLineProfiles, "lineProfileId", lineProfiles, "lineProfileId");
   applyOptionalDropdownFromRange_(enrollments, "userDisplayName", users, "displayName");
   applyOptionalDropdownFromRange_(enrollments, "courseName", courses, "name");
   applyOptionalDropdownFromRange_(attendances, "userDisplayName", users, "displayName");
   applyOptionalDropdownFromRange_(attendances, "courseName", courses, "name");
-  clearOptionalValidation_(users, "lineProfileId");
   clearOptionalValidation_(enrollments, "userId");
   clearOptionalValidation_(enrollments, "courseId");
+  clearOptionalValidation_(enrollments, "instructorId");
   clearOptionalValidation_(lessons, "enrollmentId");
   clearOptionalValidation_(attendances, "enrollmentId");
 
   applyDropdownList_(users, "role", ["STUDENT", "INSTRUCTOR", "ADMIN"]);
+  applyDropdownList_(userLineProfiles, "relationship", ["father", "mother", "parent", "guardian"]);
+  applyDropdownList_(userLineProfiles, "isPrimary", ["TRUE", "FALSE"]);
   applyDropdownList_(courses, "courseType", ["CLASS", "HOUR"]);
   applyDropdownList_(enrollments, "status", ["ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"]);
   applyDropdownList_(lessons, "status", ["SCHEDULED", "CHECKED_IN", "CANCELLED"]);

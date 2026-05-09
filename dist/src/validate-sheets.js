@@ -5,8 +5,15 @@ const issues = [];
 for (const user of db.users) {
     if (!user.userId)
         issues.push(`Users: missing userId for ${user.displayName || user.lineProfileId || "(blank user)"}`);
-    if (user.lineProfileId && !db.lineProfiles.some((profile) => profile.lineProfileId === user.lineProfileId)) {
-        issues.push(`Users: userId ${user.userId || "(blank)"} references missing lineProfileId ${user.lineProfileId}`);
+}
+for (const link of db.userLineProfiles) {
+    if (!link.userLineProfileId)
+        issues.push(`UserLineProfiles: missing userLineProfileId`);
+    if (!db.users.some((user) => user.userId === link.userId)) {
+        issues.push(`UserLineProfiles: ${link.userLineProfileId} references missing userId ${link.userId}`);
+    }
+    if (!db.lineProfiles.some((profile) => profile.lineProfileId === link.lineProfileId)) {
+        issues.push(`UserLineProfiles: ${link.userLineProfileId} references missing lineProfileId ${link.lineProfileId}`);
     }
 }
 for (const course of db.courses) {
@@ -42,6 +49,7 @@ for (const attendance of db.attendances) {
 console.log("Google Sheet relation check");
 console.log({
     lineProfiles: db.lineProfiles.length,
+    userLineProfiles: db.userLineProfiles.length,
     users: db.users.length,
     courses: db.courses.length,
     enrollments: db.enrollments.length,

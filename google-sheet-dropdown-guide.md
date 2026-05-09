@@ -5,24 +5,31 @@
 ใน tab `Users` ถ้าต้องการโชว์อายุใต้ชื่อนักเรียน ให้เพิ่ม column ได้แบบนี้:
 
 ```csv
-userId,lineProfileId,displayName,birthDate,role
+userId,displayName,pictureUrl,birthDate,role,createdAt,updatedAt
 ```
 
 กรอก `birthDate` เช่น `2018-01-15` แล้วระบบจะคำนวณอายุเป็นปีและเดือนให้อัตโนมัติ
 
+เพิ่ม tab `UserLineProfiles` สำหรับผูก LINE profile กับ user ได้หลายต่อหลาย:
+
+```csv
+userLineProfileId,userId,lineProfileId,relationship,isPrimary,createdAt,updatedAt
+```
+
 แนะนำให้เพิ่ม column ใน tab `Enrollments` เป็นแบบนี้:
 
 ```csv
-enrollmentId,userDisplayName,userId,courseName,courseId,purchasedClasses,status
+enrollmentId,userDisplayName,userId,courseName,courseId,instructorId,purchasedClasses,remainingClasses,status,createdAt,updatedAt
 ```
 
 คุณครูเลือก `userDisplayName` และ `courseName` จาก dropdown แล้ว script จะเติม `userId` และ `courseId` ให้อัตโนมัติ
 ถ้า `purchasedClasses` ว่าง ระบบจะใช้จำนวนจาก `Courses.totalClasses` แทน ส่วนจำนวนคงเหลือระบบคำนวณจากประวัติใน `Attendances` อัตโนมัติ
+`instructorId` อ้างถึง `Users.userId` ของคุณครู เช่น `teacher-earth` และใช้สำหรับหน้า `/teacher` เพื่อให้ครูเห็นเฉพาะนักเรียน/คอร์สของตัวเอง
 
 แนะนำให้เพิ่ม column ใน tab `Attendances` เป็นแบบนี้:
 
 ```csv
-attendanceId,userDisplayName,courseName,enrollmentId,instructorName,checkedInAt,classesUsed,score,note
+attendanceId,userDisplayName,courseName,enrollmentId,instructorName,checkedInAt,classesUsed,hyperactiveScore,distractionScore,attentionSpanScore,selfControlScore,selfEsteemScore,timeManagementScore,behaviorScore,note,createdAt,updatedAt
 ```
 
 คุณครูเลือก `userDisplayName` และ `courseName` จาก dropdown แล้ว script จะหา `enrollmentId` ที่ตรงกับผู้เรียนและคอร์สนั้นให้อัตโนมัติ
@@ -65,12 +72,13 @@ Field ที่เป็น ID เช่น `userId`, `courseId`, `enrollmentId`
 4. ระบบจะเติม `userId` ให้เอง
 5. เลือกชื่อคอร์สใน `courseName`
 6. ระบบจะเติม `courseId` ให้เอง
-7. ใส่ `purchasedClasses` ถ้าจำนวนที่ซื้อไม่เท่ากับคอร์สหลัก แล้วเลือก `status`
+7. ใส่ `instructorId` ของคุณครู
+8. ใส่ `purchasedClasses` ถ้าจำนวนที่ซื้อไม่เท่ากับคอร์สหลัก แล้วเลือก `status`
 
 ตัวอย่าง:
 
 ```csv
-enr-001,Sun Earth Student,user-001,Private Course 10 Classes,course-001,,ACTIVE
+enr-001,Sun Earth Student,user-001,Private Course 10 Classes,course-001,teacher-earth,,ACTIVE
 ```
 
 ## วิธีใช้งานใน Attendances
@@ -80,9 +88,9 @@ enr-001,Sun Earth Student,user-001,Private Course 10 Classes,course-001,,ACTIVE
 3. เลือกชื่อผู้เรียนใน `userDisplayName`
 4. เลือกชื่อคอร์สใน `courseName`
 5. ระบบจะเติม `enrollmentId` ให้เอง โดยหา enrollment ที่มี `userId` และ `courseId` ตรงกัน
-6. ใส่ `instructorName`, `checkedInAt`, `classesUsed`, `score`, `note`
+6. ใส่ `instructorName`, `checkedInAt`, `classesUsed`, คะแนนแต่ละด้าน, `note`
    - `checkedInAt` เป็นวันที่อย่างเดียว เช่น `2026-05-04`
-   - `score` เป็นคะแนนครูประเมินเต็ม 5 ถ้าไม่มีให้เว้นว่าง
+   - คะแนนแต่ละด้านเป็นคะแนนครูประเมินเต็ม 5 ถ้าไม่มีให้เว้นว่าง
 
 ตัวอย่าง:
 

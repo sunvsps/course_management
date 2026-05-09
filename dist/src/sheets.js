@@ -1,12 +1,13 @@
 import crypto from "node:crypto";
 import { JWT } from "google-auth-library";
 import { config } from "./config.js";
-import { mockAttendances, mockCourses, mockEnrollments, mockLineProfiles, mockLessons, mockUsers } from "./mock-data.js";
+import { mockAttendances, mockCourses, mockEnrollments, mockLineProfiles, mockLessons, mockUserLineProfiles, mockUsers } from "./mock-data.js";
 const scopes = ["https://www.googleapis.com/auth/spreadsheets"];
 export async function loadSheetDatabase() {
     if (config.MOCK_SHEET_ENABLED) {
         return {
             lineProfiles: mockLineProfiles,
+            userLineProfiles: mockUserLineProfiles,
             users: mockUsers,
             courses: mockCourses,
             enrollments: mockEnrollments,
@@ -14,8 +15,9 @@ export async function loadSheetDatabase() {
             attendances: mockAttendances
         };
     }
-    const [lineProfiles, users, courses, enrollments, lessons, attendances] = await Promise.all([
+    const [lineProfiles, userLineProfiles, users, courses, enrollments, lessons, attendances] = await Promise.all([
         readOptionalSheet("LineProfiles"),
+        readOptionalSheet("UserLineProfiles"),
         readSheet("Users"),
         readSheet("Courses"),
         readSheet("Enrollments"),
@@ -24,6 +26,7 @@ export async function loadSheetDatabase() {
     ]);
     return {
         lineProfiles: lineProfiles.map(toLineProfile),
+        userLineProfiles: userLineProfiles.map(toUserLineProfile),
         users: users.map(toUser),
         courses: courses.map(toCourse),
         enrollments: enrollments.map(toEnrollment),
@@ -51,6 +54,7 @@ export async function upsertLineProfile(profile) {
             pictureUrl: profile.pictureUrl,
             statusMessage: profile.statusMessage,
             email: profile.email,
+            createdAt: existing.createdAt || now,
             updatedAt: now
         };
         await updateSheetRow("LineProfiles", existingIndex + 2, lineProfileToValues(updated));
@@ -70,10 +74,13 @@ export async function upsertLineProfile(profile) {
     return created;
 }
 export async function createUserRow(input) {
+    const now = new Date().toISOString();
     const user = {
         ...input,
         userId: input.userId || `user-${shortId()}`,
-        role: input.role || "STUDENT"
+        role: input.role || "STUDENT",
+        createdAt: input.createdAt || now,
+        updatedAt: now
     };
     if (config.MOCK_SHEET_ENABLED) {
         ensureMockUnique(mockUsers, "userId", user.userId);
@@ -85,7 +92,16 @@ export async function createUserRow(input) {
     return user;
 }
 export async function updateUserRow(userId, input) {
-    const user = { ...input, userId };
+    const now = new Date().toISOString();
+    const existing = config.MOCK_SHEET_ENABLED
+        ? mockUsers.find((item) => item.userId === userId)
+        : (await loadSheetDatabase()).users.find((item) => item.userId === userId);
+    const user = {
+        ...input,
+        userId,
+        createdAt: existing?.createdAt || input.createdAt || now,
+        updatedAt: now
+    };
     if (config.MOCK_SHEET_ENABLED) {
         updateMockRow(mockUsers, "userId", userId, user);
         return user;
@@ -100,10 +116,55 @@ export async function deleteUserRow(userId) {
     }
     await deleteSheetObjectById("Users", "userId", userId);
 }
+export async function createUserLineProfileRow(input) {
+    const now = new Date().toISOString();
+    const link = {
+        ...input,
+        userLineProfileId: input.userLineProfileId || `ulp-${shortId()}`,
+        createdAt: input.createdAt || now,
+        updatedAt: now
+    };
+    if (config.MOCK_SHEET_ENABLED) {
+        ensureMockUnique(mockUserLineProfiles, "userLineProfileId", link.userLineProfileId);
+        mockUserLineProfiles.push(link);
+        return link;
+    }
+    await ensureSheetUnique("UserLineProfiles", "userLineProfileId", link.userLineProfileId);
+    await appendSheetObject("UserLineProfiles", userLineProfileToSheetObject(link));
+    return link;
+}
+export async function updateUserLineProfileRow(userLineProfileId, input) {
+    const now = new Date().toISOString();
+    const existing = config.MOCK_SHEET_ENABLED
+        ? mockUserLineProfiles.find((item) => item.userLineProfileId === userLineProfileId)
+        : (await loadSheetDatabase()).userLineProfiles.find((item) => item.userLineProfileId === userLineProfileId);
+    const link = {
+        ...input,
+        userLineProfileId,
+        createdAt: existing?.createdAt || input.createdAt || now,
+        updatedAt: now
+    };
+    if (config.MOCK_SHEET_ENABLED) {
+        updateMockRow(mockUserLineProfiles, "userLineProfileId", userLineProfileId, link);
+        return link;
+    }
+    await updateSheetObjectById("UserLineProfiles", "userLineProfileId", userLineProfileId, userLineProfileToSheetObject(link));
+    return link;
+}
+export async function deleteUserLineProfileRow(userLineProfileId) {
+    if (config.MOCK_SHEET_ENABLED) {
+        deleteMockRow(mockUserLineProfiles, "userLineProfileId", userLineProfileId);
+        return;
+    }
+    await deleteSheetObjectById("UserLineProfiles", "userLineProfileId", userLineProfileId);
+}
 export async function createCourseRow(input) {
+    const now = new Date().toISOString();
     const course = {
         ...input,
-        courseId: input.courseId || `course-${shortId()}`
+        courseId: input.courseId || `course-${shortId()}`,
+        createdAt: input.createdAt || now,
+        updatedAt: now
     };
     if (config.MOCK_SHEET_ENABLED) {
         ensureMockUnique(mockCourses, "courseId", course.courseId);
@@ -115,7 +176,16 @@ export async function createCourseRow(input) {
     return course;
 }
 export async function updateCourseRow(courseId, input) {
-    const course = { ...input, courseId };
+    const now = new Date().toISOString();
+    const existing = config.MOCK_SHEET_ENABLED
+        ? mockCourses.find((item) => item.courseId === courseId)
+        : (await loadSheetDatabase()).courses.find((item) => item.courseId === courseId);
+    const course = {
+        ...input,
+        courseId,
+        createdAt: existing?.createdAt || input.createdAt || now,
+        updatedAt: now
+    };
     if (config.MOCK_SHEET_ENABLED) {
         updateMockRow(mockCourses, "courseId", courseId, course);
         return course;
@@ -131,10 +201,13 @@ export async function deleteCourseRow(courseId) {
     await deleteSheetObjectById("Courses", "courseId", courseId);
 }
 export async function createEnrollmentRow(input) {
+    const now = new Date().toISOString();
     const enrollment = {
         ...input,
         enrollmentId: input.enrollmentId || `enroll-${shortId()}`,
-        remainingClasses: Number.isFinite(input.remainingClasses) ? input.remainingClasses : input.purchasedClasses
+        remainingClasses: Number.isFinite(input.remainingClasses) ? input.remainingClasses : input.purchasedClasses,
+        createdAt: input.createdAt || now,
+        updatedAt: now
     };
     if (config.MOCK_SHEET_ENABLED) {
         ensureMockUnique(mockEnrollments, "enrollmentId", enrollment.enrollmentId);
@@ -147,7 +220,16 @@ export async function createEnrollmentRow(input) {
     return enrollment;
 }
 export async function updateEnrollmentRow(enrollmentId, input) {
-    const enrollment = { ...input, enrollmentId };
+    const now = new Date().toISOString();
+    const existing = config.MOCK_SHEET_ENABLED
+        ? mockEnrollments.find((item) => item.enrollmentId === enrollmentId)
+        : (await loadSheetDatabase()).enrollments.find((item) => item.enrollmentId === enrollmentId);
+    const enrollment = {
+        ...input,
+        enrollmentId,
+        createdAt: existing?.createdAt || input.createdAt || now,
+        updatedAt: now
+    };
     if (config.MOCK_SHEET_ENABLED) {
         updateMockRow(mockEnrollments, "enrollmentId", enrollmentId, enrollment);
         return enrollment;
@@ -164,22 +246,36 @@ export async function deleteEnrollmentRow(enrollmentId) {
     await deleteSheetObjectById("Enrollments", "enrollmentId", enrollmentId);
 }
 export async function createAttendanceRow(input) {
+    const now = new Date().toISOString();
+    const db = await loadSheetDatabase();
     const attendance = {
         ...input,
-        attendanceId: input.attendanceId || `att-${shortId()}`
+        attendanceId: input.attendanceId || `att-${shortId()}`,
+        createdAt: input.createdAt || now,
+        updatedAt: now
     };
     if (config.MOCK_SHEET_ENABLED) {
         ensureMockUnique(mockAttendances, "attendanceId", attendance.attendanceId);
         mockAttendances.push(attendance);
+        await updateEnrollmentAfterAttendanceCreated(attendance, db, now);
         return attendance;
     }
-    const db = await loadSheetDatabase();
     await ensureSheetUnique("Attendances", "attendanceId", attendance.attendanceId);
     await appendSheetObject("Attendances", attendanceToSheetObject(attendance, db));
+    await updateEnrollmentAfterAttendanceCreated(attendance, db, now);
     return attendance;
 }
 export async function updateAttendanceRow(attendanceId, input) {
-    const attendance = { ...input, attendanceId };
+    const now = new Date().toISOString();
+    const existing = config.MOCK_SHEET_ENABLED
+        ? mockAttendances.find((item) => item.attendanceId === attendanceId)
+        : (await loadSheetDatabase()).attendances.find((item) => item.attendanceId === attendanceId);
+    const attendance = {
+        ...input,
+        attendanceId,
+        createdAt: existing?.createdAt || input.createdAt || now,
+        updatedAt: now
+    };
     if (config.MOCK_SHEET_ENABLED) {
         updateMockRow(mockAttendances, "attendanceId", attendanceId, attendance);
         return attendance;
@@ -200,16 +296,45 @@ export async function recalculateEnrollmentRemaining(enrollmentId) {
     const enrollment = db.enrollments.find((item) => item.enrollmentId === enrollmentId);
     if (!enrollment)
         return;
+    const course = db.courses.find((item) => item.courseId === enrollment.courseId);
+    const purchasedClasses = resolvePurchasedClasses(enrollment.purchasedClasses, course?.totalClasses);
     const used = db.attendances
         .filter((attendance) => attendance.enrollmentId === enrollmentId)
         .reduce((sum, attendance) => sum + attendance.classesUsed, 0);
-    const remainingClasses = Math.max(enrollment.purchasedClasses - used, 0);
-    const updated = { ...enrollment, remainingClasses };
+    const remainingClasses = Math.max(purchasedClasses - used, 0);
+    const updated = {
+        ...enrollment,
+        remainingClasses,
+        status: remainingClasses <= 0 ? "COMPLETED" : enrollment.status,
+        updatedAt: new Date().toISOString()
+    };
     if (config.MOCK_SHEET_ENABLED) {
         updateMockRow(mockEnrollments, "enrollmentId", enrollmentId, updated);
         return;
     }
     await updateSheetObjectById("Enrollments", "enrollmentId", enrollmentId, enrollmentToSheetObject(updated, db));
+}
+async function updateEnrollmentAfterAttendanceCreated(attendance, db, updatedAt) {
+    const enrollment = db.enrollments.find((item) => item.enrollmentId === attendance.enrollmentId);
+    if (!enrollment)
+        return;
+    const course = db.courses.find((item) => item.courseId === enrollment.courseId);
+    const purchasedClasses = resolvePurchasedClasses(enrollment.purchasedClasses, course?.totalClasses);
+    const usedClasses = db.attendances
+        .filter((item) => item.enrollmentId === attendance.enrollmentId && item.attendanceId !== attendance.attendanceId)
+        .reduce((sum, item) => sum + (Number.isFinite(item.classesUsed) ? item.classesUsed : 0), 0) + attendance.classesUsed;
+    const remainingClasses = Math.max(purchasedClasses - usedClasses, 0);
+    const updated = {
+        ...enrollment,
+        remainingClasses,
+        status: remainingClasses <= 0 ? "COMPLETED" : enrollment.status,
+        updatedAt
+    };
+    if (config.MOCK_SHEET_ENABLED) {
+        updateMockRow(mockEnrollments, "enrollmentId", enrollment.enrollmentId, updated);
+        return;
+    }
+    await updateSheetObjectById("Enrollments", "enrollmentId", enrollment.enrollmentId, enrollmentToSheetObject(updated, db));
 }
 async function readOptionalSheet(sheetName) {
     try {
@@ -425,6 +550,17 @@ function toLineProfile(row) {
         updatedAt: row.updatedAt
     };
 }
+function toUserLineProfile(row) {
+    return {
+        userLineProfileId: row.userLineProfileId,
+        userId: row.userId,
+        lineProfileId: row.lineProfileId,
+        relationship: row.relationship,
+        isPrimary: normalizeBoolean(row.isPrimary),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+    };
+}
 function toUser(row) {
     return {
         userId: row.userId,
@@ -432,7 +568,9 @@ function toUser(row) {
         displayName: row.displayName,
         pictureUrl: row.pictureUrl,
         birthDate: row.birthDate,
-        role: normalizeRole(row.role)
+        role: normalizeRole(row.role),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
     };
 }
 function toCourse(row) {
@@ -440,7 +578,9 @@ function toCourse(row) {
         courseId: row.courseId,
         name: row.name,
         courseType: normalizeCourseType(row.courseType),
-        totalClasses: Number(row.totalClasses)
+        totalClasses: Number(row.totalClasses),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
     };
 }
 function toEnrollment(row) {
@@ -448,9 +588,12 @@ function toEnrollment(row) {
         enrollmentId: row.enrollmentId,
         userId: row.userId,
         courseId: row.courseId,
+        instructorId: row.instructorId,
         purchasedClasses: Number(row.purchasedClasses),
         remainingClasses: Number(row.remainingClasses),
-        status: normalizeStatus(row.status)
+        status: normalizeStatus(row.status),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
     };
 }
 function lineProfileToValues(profile) {
@@ -472,7 +615,9 @@ function toLesson(row) {
         instructorName: row.instructorName,
         startsAt: row.startsAt,
         endsAt: row.endsAt,
-        status: normalizeLessonStatus(row.status)
+        status: normalizeLessonStatus(row.status),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
     };
 }
 function toAttendance(row) {
@@ -483,7 +628,16 @@ function toAttendance(row) {
         checkedInAt: row.checkedInAt,
         classesUsed: Number(row.classesUsed),
         score: optionalNumber(row.score),
-        note: row.note
+        hyperactiveScore: optionalNumber(row.hyperactiveScore),
+        distractionScore: optionalNumber(row.distractionScore),
+        attentionSpanScore: optionalNumber(row.attentionSpanScore),
+        selfControlScore: optionalNumber(row.selfControlScore),
+        selfEsteemScore: optionalNumber(row.selfEsteemScore),
+        timeManagementScore: optionalNumber(row.timeManagementScore),
+        behaviorScore: optionalNumber(row.behaviorScore),
+        note: row.note,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
     };
 }
 function userToSheetObject(user) {
@@ -493,7 +647,20 @@ function userToSheetObject(user) {
         displayName: user.displayName,
         pictureUrl: user.pictureUrl ?? "",
         birthDate: user.birthDate ?? "",
-        role: user.role
+        role: user.role,
+        createdAt: user.createdAt ?? "",
+        updatedAt: user.updatedAt ?? ""
+    };
+}
+function userLineProfileToSheetObject(link) {
+    return {
+        userLineProfileId: link.userLineProfileId,
+        userId: link.userId,
+        lineProfileId: link.lineProfileId,
+        relationship: link.relationship ?? "",
+        isPrimary: link.isPrimary ? "TRUE" : "",
+        createdAt: link.createdAt ?? "",
+        updatedAt: link.updatedAt ?? ""
     };
 }
 function courseToSheetObject(course) {
@@ -501,7 +668,9 @@ function courseToSheetObject(course) {
         courseId: course.courseId,
         name: course.name,
         courseType: course.courseType,
-        totalClasses: course.totalClasses
+        totalClasses: course.totalClasses,
+        createdAt: course.createdAt ?? "",
+        updatedAt: course.updatedAt ?? ""
     };
 }
 function enrollmentToSheetObject(enrollment, db) {
@@ -513,9 +682,12 @@ function enrollmentToSheetObject(enrollment, db) {
         userId: enrollment.userId ?? "",
         courseName: course?.name ?? "",
         courseId: enrollment.courseId,
+        instructorId: enrollment.instructorId ?? "",
         purchasedClasses: enrollment.purchasedClasses,
         remainingClasses: enrollment.remainingClasses,
-        status: enrollment.status
+        status: enrollment.status,
+        createdAt: enrollment.createdAt ?? "",
+        updatedAt: enrollment.updatedAt ?? ""
     };
 }
 function attendanceToSheetObject(attendance, db) {
@@ -531,7 +703,16 @@ function attendanceToSheetObject(attendance, db) {
         checkedInAt: attendance.checkedInAt,
         classesUsed: attendance.classesUsed,
         score: attendance.score ?? "",
-        note: attendance.note ?? ""
+        hyperactiveScore: attendance.hyperactiveScore ?? "",
+        distractionScore: attendance.distractionScore ?? "",
+        attentionSpanScore: attendance.attentionSpanScore ?? "",
+        selfControlScore: attendance.selfControlScore ?? "",
+        selfEsteemScore: attendance.selfEsteemScore ?? "",
+        timeManagementScore: attendance.timeManagementScore ?? "",
+        behaviorScore: attendance.behaviorScore ?? "",
+        note: attendance.note ?? "",
+        createdAt: attendance.createdAt ?? "",
+        updatedAt: attendance.updatedAt ?? ""
     };
 }
 async function ensureSheetUnique(sheetName, idField, id) {
@@ -588,12 +769,21 @@ function columnName(columnNumber) {
 function shortId() {
     return crypto.randomUUID().slice(0, 8);
 }
+function resolvePurchasedClasses(enrollmentPurchasedClasses, courseTotalClasses) {
+    if (Number.isFinite(enrollmentPurchasedClasses) && enrollmentPurchasedClasses > 0) {
+        return enrollmentPurchasedClasses;
+    }
+    return Number.isFinite(courseTotalClasses) ? courseTotalClasses ?? 0 : 0;
+}
 function normalizeRole(role) {
     return role === "INSTRUCTOR" || role === "ADMIN" ? role : "STUDENT";
 }
 function normalizeCourseType(courseType) {
     const normalized = courseType.trim().toUpperCase();
     return normalized === "HOUR" || normalized === "HOURS" || normalized === "รายชม." ? "HOUR" : "CLASS";
+}
+function normalizeBoolean(value) {
+    return ["TRUE", "YES", "1", "Y"].includes(value.trim().toUpperCase());
 }
 function normalizeStatus(status) {
     if (status === "PAUSED" || status === "COMPLETED" || status === "CANCELLED")

@@ -1,19 +1,39 @@
+const mockTimestamp = new Date().toISOString();
 export const mockLineProfiles = [
     {
         lineProfileId: "line-profile-demo",
         lineUserId: "1234",
         displayName: "Demo Student",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
+    }
+];
+export const mockUserLineProfiles = [
+    {
+        userLineProfileId: "ulp-demo",
+        userId: "1234",
+        lineProfileId: "line-profile-demo",
+        relationship: "parent",
+        isPrimary: true,
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
     }
 ];
 export const mockUsers = [
     {
         userId: "1234",
-        lineProfileId: "line-profile-demo",
         displayName: "Demo Student",
         birthDate: "2018-01-15",
-        role: "STUDENT"
+        role: "STUDENT",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
+    },
+    {
+        userId: "teacher-earth",
+        displayName: "ครูเอิร์ธ",
+        role: "INSTRUCTOR",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
     }
 ];
 export const mockCourses = [
@@ -21,13 +41,17 @@ export const mockCourses = [
         courseId: "course-10",
         name: "Private Course 10 Classes",
         courseType: "CLASS",
-        totalClasses: 10
+        totalClasses: 10,
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
     },
     {
         courseId: "hour-10",
         name: "Private Course 10 Hours",
         courseType: "HOUR",
-        totalClasses: 10
+        totalClasses: 10,
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
     }
 ];
 export const mockEnrollments = [
@@ -35,29 +59,43 @@ export const mockEnrollments = [
         enrollmentId: "enroll-demo",
         userId: "1234",
         courseId: "course-10",
+        instructorId: "teacher-earth",
         purchasedClasses: 10,
         remainingClasses: 5,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
     }
 ];
 export const mockLessons = [
     {
         lessonId: "lesson-next",
         enrollmentId: "enroll-demo",
-        instructorName: "Demo Teacher",
+        instructorName: "ครูเอิร์ธ",
         startsAt: futureDate(1, 10),
         endsAt: futureDate(1, 11),
-        status: "SCHEDULED"
+        status: "SCHEDULED",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
     }
 ];
 export const mockAttendances = Array.from({ length: 5 }, (_, index) => ({
     attendanceId: `att-${index + 1}`,
     enrollmentId: "enroll-demo",
-    instructorName: "Demo Teacher",
+    instructorName: "ครูเอิร์ธ",
     checkedInAt: pastDate(5 - index),
     classesUsed: 1,
     score: index % 2 === 0 ? 5 : undefined,
-    note: `เรียนครั้งที่ ${index + 1}`
+    hyperactiveScore: index % 2 === 0 ? 4 : undefined,
+    distractionScore: index % 2 === 0 ? 3.5 : undefined,
+    attentionSpanScore: index % 2 === 0 ? 4.5 : undefined,
+    selfControlScore: index % 2 === 0 ? 4 : undefined,
+    selfEsteemScore: index % 2 === 0 ? 5 : undefined,
+    timeManagementScore: index % 2 === 0 ? 4 : undefined,
+    behaviorScore: index % 2 === 0 ? 5 : undefined,
+    note: `เรียนครั้งที่ ${index + 1}`,
+    createdAt: mockTimestamp,
+    updatedAt: mockTimestamp
 }));
 function futureDate(daysFromNow, hour) {
     const date = new Date();

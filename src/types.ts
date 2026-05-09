@@ -1,7 +1,9 @@
 export type SessionUser = {
   userId: string;
   displayName: string;
+  lineProfileId?: string;
   role?: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+  instructorName?: string;
 };
 
 export type LineProfileRow = {
@@ -22,6 +24,18 @@ export type UserRow = {
   pictureUrl?: string;
   birthDate?: string;
   role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type UserLineProfileRow = {
+  userLineProfileId: string;
+  userId: string;
+  lineProfileId: string;
+  relationship?: string;
+  isPrimary?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type CourseRow = {
@@ -29,15 +43,20 @@ export type CourseRow = {
   name: string;
   courseType: "CLASS" | "HOUR";
   totalClasses: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type EnrollmentRow = {
   enrollmentId: string;
   userId?: string;
   courseId: string;
+  instructorId?: string;
   purchasedClasses: number;
   remainingClasses: number;
   status: "ACTIVE" | "PAUSED" | "COMPLETED" | "CANCELLED";
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type LessonRow = {
@@ -47,6 +66,8 @@ export type LessonRow = {
   startsAt: string;
   endsAt: string;
   status: "SCHEDULED" | "CHECKED_IN" | "CANCELLED";
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type AttendanceRow = {
@@ -56,7 +77,16 @@ export type AttendanceRow = {
   checkedInAt: string;
   classesUsed: number;
   score?: number;
+  hyperactiveScore?: number;
+  distractionScore?: number;
+  attentionSpanScore?: number;
+  selfControlScore?: number;
+  selfEsteemScore?: number;
+  timeManagementScore?: number;
+  behaviorScore?: number;
   note?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 declare module "fastify" {

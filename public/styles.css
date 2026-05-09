@@ -480,6 +480,31 @@ button.secondary {
   border-color: #17202a;
 }
 
+.teacherViewNav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 6px;
+  border: 1px solid #d8e1e8;
+  border-radius: 8px;
+  background: #f4f7f9;
+}
+
+.teacherViewButton {
+  min-height: 42px;
+  border-color: transparent;
+  background: transparent;
+  color: #4d5965;
+  font-weight: 850;
+}
+
+.teacherViewButton.active {
+  color: #ffffff;
+  background: #17202a;
+  border-color: #17202a;
+}
+
 .adminContent {
   display: grid;
   gap: 14px;
@@ -551,7 +576,11 @@ button.secondary {
 }
 
 .adminForm input,
-.adminForm select {
+.adminForm select,
+.adminForm textarea,
+.checkinForm input,
+.checkinForm select,
+.checkinForm textarea {
   width: 100%;
   min-height: 40px;
   border: 1px solid #cfd9e1;
@@ -562,7 +591,8 @@ button.secondary {
   padding: 8px 10px;
 }
 
-.adminForm input[readonly] {
+.adminForm input[readonly],
+.checkinForm input[readonly] {
   color: #69727d;
   background: #f4f6f7;
 }
@@ -571,11 +601,289 @@ button.secondary {
   grid-column: span 2;
 }
 
+.scoreInputGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.checkinForm {
+  display: grid;
+  gap: 18px;
+}
+
+.checkinHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 18px;
+  align-items: start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e4eaef;
+}
+
+.checkinHeader h2 {
+  margin: 2px 0 0;
+  color: #17202a;
+  font-size: 24px;
+}
+
+.checkinSummary {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #bfd8ea;
+  border-radius: 8px;
+  background: #f1f8fd;
+  color: #405261;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.checkinSummary strong {
+  color: #17202a;
+  font-size: 15px;
+}
+
+.checkinSection {
+  display: grid;
+  gap: 12px;
+}
+
+.checkinSectionTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.checkinSectionTitle h3,
+.scoreGroup h4 {
+  margin: 0;
+  color: #17202a;
+}
+
+.checkinSectionTitle h3 {
+  font-size: 17px;
+}
+
+.checkinClassGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.checkinClassGrid label,
+.noteField {
+  display: grid;
+  gap: 6px;
+  color: #4d5965;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.checkinWide {
+  grid-column: span 2;
+}
+
+.courseUsagePanel {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+  grid-column: span 2;
+  border: 1px solid #dde8df;
+  border-radius: 8px;
+  background: #f6fbf7;
+  padding: 11px;
+}
+
+.courseUsagePanel div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.courseUsagePanel span {
+  color: #607066;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.courseUsagePanel strong {
+  color: #17202a;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.scoreGroups {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 14px;
+}
+
+.scoreGroup {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid #e1e7ec;
+  border-radius: 8px;
+  background: #fbfcfd;
+  padding: 12px;
+}
+
+.scoreGroup h4 {
+  font-size: 15px;
+}
+
+.scoreChoice {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #edf1f4;
+  padding: 10px 0 0;
+}
+
+.scoreChoice:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.scoreChoice legend {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  color: #17202a;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.scoreChoice small {
+  color: #6c7a89;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.previousScoreBadge {
+  justify-self: start;
+  border: 1px solid #b8dfc5;
+  border-radius: 8px;
+  background: #e9f8ee;
+  color: #216a3b;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.scoreScale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.scoreOption {
+  min-width: 0;
+}
+
+.scoreOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scoreOption span {
+  display: grid;
+  place-items: center;
+  min-height: 36px;
+  border: 1px solid #cfd9e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #405261;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.scoreOption input:focus-visible + span {
+  outline: 2px solid #48a3d7;
+  outline-offset: 2px;
+}
+
+.scoreOption input:checked + span {
+  border-color: #16835f;
+  background: #16835f;
+  color: #ffffff;
+}
+
+.scoreHints {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #71808e;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.noteField textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.checkinFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 2px -16px -16px;
+  padding: 12px 16px;
+  border-top: 1px solid #e4eaef;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+}
+
 .adminFormActions {
   display: flex;
   align-items: end;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.filterBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4eaef;
+}
+
+.filterControl {
+  display: grid;
+  gap: 6px;
+  color: #4d5965;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.filterControl input,
+.filterControl select {
+  min-height: 38px;
+  border: 1px solid #cfd9e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17202a;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.filterResetButton {
+  min-height: 38px;
+}
+
+.adminPagination {
+  margin-top: 12px;
 }
 
 .adminTableWrap {
@@ -785,8 +1093,33 @@ button.secondary {
     grid-template-columns: 1fr;
   }
 
+  .checkinHeader,
+  .checkinClassGrid,
+  .scoreGroups,
+  .courseUsagePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .checkinWide,
+  .courseUsagePanel {
+    grid-column: auto;
+  }
+
+  .checkinFooter {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .checkinFooter button {
+    width: 100%;
+  }
+
   .adminFormWide {
     grid-column: auto;
+  }
+
+  .scoreInputGrid {
+    grid-template-columns: 1fr;
   }
 
   .adminPageHeader,

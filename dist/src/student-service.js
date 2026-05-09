@@ -1,11 +1,11 @@
 import { loadSheetDatabase } from "./sheets.js";
-export async function getStudentDashboard(userId) {
+export async function getStudentDashboard(userId, lineProfileId) {
     const db = await loadSheetDatabase();
     const user = db.users.find((item) => item.userId === userId);
     if (!user) {
         throw new Error("Student not found");
     }
-    const relatedStudents = findRelatedStudents(db.users, user);
+    const relatedStudents = findRelatedStudents(db, user, lineProfileId);
     const students = relatedStudents.map((student) => buildStudentDashboard(db, student));
     if (students.length > 1) {
         return {
@@ -61,10 +61,19 @@ function resolveRemainingClasses(purchasedClasses, attendances) {
     }, 0);
     return Math.max(purchasedClasses - usedClasses, 0);
 }
-function findRelatedStudents(users, user) {
+function findRelatedStudents(db, user, lineProfileId) {
+    if (lineProfileId) {
+        const linkedUserIds = new Set(db.userLineProfiles
+            .filter((link) => link.lineProfileId === lineProfileId)
+            .map((link) => link.userId));
+        const relatedStudents = db.users
+            .filter((item) => item.role === "STUDENT" && item.userId && linkedUserIds.has(item.userId))
+            .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
+        return relatedStudents.length > 0 ? relatedStudents : [user];
+    }
     if (!user.lineProfileId)
         return [user];
-    const relatedStudents = users
+    const relatedStudents = db.users
         .filter((item) => item.role === "STUDENT" && item.lineProfileId === user.lineProfileId && item.userId)
         .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
     return relatedStudents.length > 0 ? relatedStudents : [user];

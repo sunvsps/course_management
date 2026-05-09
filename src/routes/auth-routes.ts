@@ -47,7 +47,9 @@ export async function authRoutes(app: FastifyInstance) {
       email: idProfile?.email
     });
     const db = await loadSheetDatabase();
-    const user = db.users.find((item) => item.lineProfileId === profile.lineProfileId);
+    const linkedUserId = db.userLineProfiles.find((link) => link.lineProfileId === profile.lineProfileId)?.userId;
+    const user = db.users.find((item) => item.userId === linkedUserId)
+      ?? db.users.find((item) => item.lineProfileId === profile.lineProfileId);
 
     if (!user?.userId) {
       throw new Error("LINE profile is not linked to a student userId yet");
@@ -55,7 +57,8 @@ export async function authRoutes(app: FastifyInstance) {
 
     const token = signSession({
       userId: user.userId,
-      displayName: user.displayName || profile.displayName
+      displayName: user.displayName || profile.displayName,
+      lineProfileId: profile.lineProfileId
     });
 
     return { token };

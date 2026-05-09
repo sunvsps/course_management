@@ -24,3 +24,11 @@ export async function requireAdmin(request, reply) {
         return reply.code(403).send({ error: "Admin access required" });
     }
 }
+export async function requireInstructor(request, reply) {
+    await requireAuth(request, reply);
+    if (reply.sent)
+        return;
+    if (request.user?.role !== "INSTRUCTOR" && request.user?.role !== "ADMIN") {
+        return reply.code(403).send({ error: "Instructor access required" });
+    }
+}

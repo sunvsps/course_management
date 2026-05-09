@@ -1,41 +1,53 @@
 import { loadSheetDatabase } from "./sheets.js";
 import type { SheetDatabase } from "./sheets.js";
-import type { UserRow } from "./types.js";
+import type { EnrollmentRow, UserRow } from "./types.js";
 
-export async function getStudentDashboard(userId: string, lineProfileId?: string) {
+export async function getTeacherDashboard(instructorId: string) {
   const db = await loadSheetDatabase();
-  const user = db.users.find((item) => item.userId === userId);
 
-  if (!user) {
-    throw new Error("Student not found");
+  if (!instructorId) {
+    throw new Error("Instructor ID is required");
   }
 
-  const relatedStudents = findRelatedStudents(db, user, lineProfileId);
-  const students = relatedStudents.map((student) => buildStudentDashboard(db, student));
+  const teacherEnrollments = db.enrollments.filter((enrollment) => {
+    return enrollment.instructorId === instructorId;
+  });
+  const userIds = new Set(teacherEnrollments.map((enrollment) => enrollment.userId).filter(Boolean));
+  const instructor = db.users.find((user) => user.userId === instructorId);
+  const students = db.users
+    .filter((user) => user.role === "STUDENT" && user.userId && userIds.has(user.userId))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"))
+    .map((student) => buildTeacherStudentDashboard(db, student, teacherEnrollments));
 
-  if (students.length > 1) {
-    return {
-      user: toPublicUser(user),
-      students
-    };
-  }
-
-  return buildStudentDashboard(db, user);
+  return {
+    user: {
+      userId: instructorId,
+      displayName: instructor?.displayName ?? instructorId,
+      role: "INSTRUCTOR"
+    },
+    students
+  };
 }
 
-function buildStudentDashboard(db: SheetDatabase, user: UserRow) {
-  const enrollments = db.enrollments
+function buildTeacherStudentDashboard(
+  db: SheetDatabase,
+  user: UserRow,
+  teacherEnrollments: EnrollmentRow[]
+) {
+  const enrollments = teacherEnrollments
     .filter((enrollment) => enrollment.userId === user.userId)
     .map((enrollment) => {
       const course = db.courses.find((item) => item.courseId === enrollment.courseId);
       const lessons = db.lessons
-        .filter((lesson) => lesson.enrollmentId === enrollment.enrollmentId && lesson.status === "SCHEDULED")
+        .filter((lesson) => lesson.enrollmentId === enrollment.enrollmentId)
         .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
       const attendances = db.attendances
         .filter((attendance) => attendance.enrollmentId === enrollment.enrollmentId)
         .sort((a, b) => new Date(b.checkedInAt).getTime() - new Date(a.checkedInAt).getTime());
+      const allAttendancesForEnrollment = db.attendances
+        .filter((attendance) => attendance.enrollmentId === enrollment.enrollmentId);
       const purchasedClasses = resolvePurchasedClasses(enrollment.purchasedClasses, course?.totalClasses);
-      const remainingClasses = resolveRemainingClasses(purchasedClasses, attendances);
+      const remainingClasses = resolveRemainingClasses(purchasedClasses, allAttendancesForEnrollment);
 
       return {
         ...enrollment,
@@ -54,7 +66,13 @@ function buildStudentDashboard(db: SheetDatabase, user: UserRow) {
     });
 
   return {
-    user: toPublicUser(user),
+    user: {
+      userId: user.userId,
+      displayName: user.displayName,
+      pictureUrl: user.pictureUrl,
+      birthDate: user.birthDate,
+      role: user.role
+    },
     enrollments
   };
 }
@@ -76,39 +94,6 @@ function resolveRemainingClasses(
   }, 0);
 
   return Math.max(purchasedClasses - usedClasses, 0);
-}
-
-function findRelatedStudents(db: SheetDatabase, user: UserRow, lineProfileId?: string) {
-  if (lineProfileId) {
-    const linkedUserIds = new Set(
-      db.userLineProfiles
-        .filter((link) => link.lineProfileId === lineProfileId)
-        .map((link) => link.userId)
-    );
-    const relatedStudents = db.users
-      .filter((item) => item.role === "STUDENT" && item.userId && linkedUserIds.has(item.userId))
-      .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
-
-    return relatedStudents.length > 0 ? relatedStudents : [user];
-  }
-
-  if (!user.lineProfileId) return [user];
-
-  const relatedStudents = db.users
-    .filter((item) => item.role === "STUDENT" && item.lineProfileId === user.lineProfileId && item.userId)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
-
-  return relatedStudents.length > 0 ? relatedStudents : [user];
-}
-
-function toPublicUser(user: UserRow) {
-  return {
-    userId: user.userId,
-    displayName: user.displayName,
-    pictureUrl: user.pictureUrl,
-    birthDate: user.birthDate,
-    role: user.role
-  };
 }
 
 function statusRank(status: string) {

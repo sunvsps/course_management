@@ -8,6 +8,15 @@ let isCourseDetailOpen = false;
 let isHistoryOpen = false;
 let historyPage = 1;
 const historyPageSize = 10;
+const scoreFields = [
+  ["hyperactiveScore", "Hyperactive"],
+  ["distractionScore", "Distraction"],
+  ["attentionSpanScore", "Attention span"],
+  ["selfControlScore", "Self control"],
+  ["selfEsteemScore", "Self esteem"],
+  ["timeManagementScore", "Time management"],
+  ["behaviorScore", "Behavior"]
+];
 
 export function renderStudentDashboard(dashboard) {
   document.getElementById("loadingView").classList.add("hidden");
@@ -324,6 +333,14 @@ function studentAgeText(user) {
 }
 
 function scoreText(attendance) {
+  const scores = scoreFields
+    .map(([name, label]) => [label, Number(attendance[name])])
+    .filter(([, score]) => Number.isFinite(score));
+
+  if (scores.length > 0) {
+    return scores.map(([label, score]) => `${label} ${formatNumber(score)}/5`).join(" | ");
+  }
+
   if (!Number.isFinite(Number(attendance.score))) return "";
   return `ครูประเมิน ${formatNumber(attendance.score)}/5 คะแนน`;
 }
