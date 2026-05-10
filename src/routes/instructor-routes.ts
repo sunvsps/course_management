@@ -1,12 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireInstructor, signSession } from "../auth.js";
-import { config } from "../config.js";
 import { createAttendanceRow, loadSheetDatabase } from "../sheets.js";
 import { getTeacherDashboard } from "../teacher-service.js";
 
 const loginSchema = z.object({
-  username: z.string().min(1),
+  username: z.string().trim().toLowerCase().min(1),
   password: z.string().min(1)
 });
 
@@ -32,25 +31,28 @@ const attendanceSchema = z.object({
 export async function instructorRoutes(app: FastifyInstance) {
   app.post("/login", async (request, reply) => {
     const body = loginSchema.parse(request.body);
-
-    if (!config.TEACHER_USERNAME || !config.TEACHER_PASSWORD) {
-      return reply.code(503).send({ error: "Teacher login is not configured" });
-    }
-
-    if (body.username !== config.TEACHER_USERNAME || body.password !== config.TEACHER_PASSWORD) {
-      return reply.code(401).send({ error: "Username or password is incorrect" });
-    }
-
-    const instructorName = config.TEACHER_DISPLAY_NAME || body.username;
-    const instructorId = config.TEACHER_USER_ID || body.username;
-    const token = signSession({
-      userId: instructorId,
-      displayName: instructorName,
-      instructorName,
-      role: "INSTRUCTOR"
+    const db = await loadSheetDatabase();
+    const teacherLogin = db.teacherLogins.find((item) => {
+      return item.username.trim().toLowerCase() === body.username && item.password === body.password;
     });
 
-    return { token };
+    if (teacherLogin) {
+      const user = db.users.find((item) => item.userId === teacherLogin.userId);
+      if (!user?.userId || (user.role !== "INSTRUCTOR" && user.role !== "ADMIN")) {
+        return reply.code(403).send({ error: "Teacher login is not linked to an instructor user" });
+      }
+
+      const token = signSession({
+        userId: user.userId,
+        displayName: user.displayName,
+        instructorName: user.displayName,
+        role: "INSTRUCTOR"
+      });
+
+      return { token };
+    }
+
+    return reply.code(401).send({ error: "Username or password is incorrect" });
   });
 
   app.get("/dashboard", { preHandler: requireInstructor }, async (request) => {
