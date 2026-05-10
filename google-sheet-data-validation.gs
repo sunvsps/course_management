@@ -20,6 +20,7 @@ function setupCourseManagementDropdowns() {
 
   const lineProfiles = requireSheet_(ss, "LineProfiles");
   const userLineProfiles = requireSheet_(ss, "UserLineProfiles");
+  const teacherLogins = requireSheet_(ss, "TeacherLogins");
   const users = requireSheet_(ss, "Users");
   const courses = requireSheet_(ss, "Courses");
   const enrollments = requireSheet_(ss, "Enrollments");
@@ -28,6 +29,7 @@ function setupCourseManagementDropdowns() {
 
   applyOptionalDropdownFromRange_(userLineProfiles, "userId", users, "userId");
   applyOptionalDropdownFromRange_(userLineProfiles, "lineProfileId", lineProfiles, "lineProfileId");
+  applyOptionalDropdownFromRange_(teacherLogins, "userId", users, "userId");
   applyOptionalDropdownFromRange_(enrollments, "userDisplayName", users, "displayName");
   applyOptionalDropdownFromRange_(enrollments, "courseName", courses, "name");
   applyOptionalDropdownFromRange_(attendances, "userDisplayName", users, "displayName");

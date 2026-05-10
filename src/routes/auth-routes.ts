@@ -51,29 +51,25 @@ export async function authRoutes(app: FastifyInstance) {
       .filter((link) => link.lineProfileId === profile.lineProfileId)
       .map((link) => link.userId);
     const linkedUsers = db.users.filter((item) => item.userId && linkedUserIds.includes(item.userId));
-    const user = linkedUsers.find((item) => item.role === "INSTRUCTOR")
-      ?? linkedUsers.find((item) => item.role === "ADMIN")
-      ?? linkedUsers.find((item) => item.role === "STUDENT");
+    const user = linkedUsers.find((item) => item.role === "STUDENT");
 
     if (!user?.userId) {
-      throw new Error("LINE profile is not linked to a student userId yet");
+      throw new Error("LINE profile is not linked to a student userId yet. Teachers must login with username and password.");
     }
 
     const role = user.role || "STUDENT";
-    const isTeacher = role === "INSTRUCTOR" || role === "ADMIN";
 
     const token = signSession({
       userId: user.userId,
       displayName: user.displayName || profile.displayName,
       lineProfileId: profile.lineProfileId,
-      role,
-      instructorName: isTeacher ? user.displayName || profile.displayName : undefined
+      role
     });
 
     return {
       token,
       role,
-      redirectPath: isTeacher ? "/teacher" : "/student"
+      redirectPath: "/student"
     };
   });
 }

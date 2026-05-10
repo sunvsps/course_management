@@ -25,11 +25,9 @@ http://localhost:3001/admin
 ```env
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin123456"
-TEACHER_USERNAME="teacher"
-TEACHER_PASSWORD="teacher123456"
-TEACHER_USER_ID="teacher-earth"
-TEACHER_DISPLAY_NAME="ครูเอิร์ธ"
 ```
+
+บัญชีครูสำหรับ `/teacher` ไม่ได้อ่านจาก env แล้ว ให้เพิ่มใน tab `TeacherLogins` แทน เพื่อรองรับครูหลายคน
 
 เวลา deploy บน Render ให้ตั้ง `ADMIN_PASSWORD` เป็นรหัสจริงที่เดายาก และไม่ต้องใส่เครื่องหมาย `"` ในหน้า Environment ของ Render
 
@@ -113,6 +111,17 @@ ulp-003,student-b,line-profile-mom-001,mother,TRUE,2026-05-09T10:00:00.000Z,2026
 
 เมื่อผู้ปกครองเปิดหน้า `/student` ระบบจะดึงนักเรียนทุกคนที่ผูกกับ LINE profile ที่ login อยู่มาให้เลือกอัตโนมัติ
 
+### TeacherLogins
+
+บัญชี username/password สำหรับให้ครู login เข้า `/teacher` รองรับครูหลายคน โดย `userId` ต้องอ้างถึง `Users.userId` ที่มี role เป็น `INSTRUCTOR` หรือ `ADMIN`
+
+```csv
+teacherLoginId,userId,username,password,createdAt,updatedAt
+teacher-login-earth,teacher-earth,teacher,teacher123456,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
+```
+
+ครูจะไม่ login ผ่าน LINE แล้ว ส่วน LINE login จะใช้สำหรับนักเรียน/ผู้ปกครองเท่านั้น
+
 ### Courses
 
 ```csv
@@ -178,7 +187,8 @@ GOOGLE_SPREADSHEET_ID="..."
 - Backend verify `idToken` กับ LINE
 - Backend fetch LINE profile ด้วย `accessToken`
 - Backend upsert ข้อมูลลง tab `LineProfiles`
-- Admin ค่อยสร้าง link ใน tab `UserLineProfiles` เพื่อผูก `lineProfileId` กับ `userId`
+- Admin ค่อยสร้าง link ใน tab `UserLineProfiles` เพื่อผูก `lineProfileId` กับ `userId` ของนักเรียน
+- ครู login ที่ `/teacher` ด้วย username/password จาก tab `TeacherLogins`
 
 ตั้ง scope ใน LIFF/LINE Login channel:
 
@@ -215,10 +225,6 @@ APP_BASE_URL=https://your-app.onrender.com
 SESSION_SECRET=...
 ADMIN_USERNAME=...
 ADMIN_PASSWORD=...
-TEACHER_USERNAME=...
-TEACHER_PASSWORD=...
-TEACHER_USER_ID=...
-TEACHER_DISPLAY_NAME=...
 APP_BASE_URL=https://your-app.onrender.com
 LIFF_ID=...
 LINE_LOGIN_CHANNEL_ID=...

@@ -36,6 +36,16 @@ export const mockUsers = [
         updatedAt: mockTimestamp
     }
 ];
+export const mockTeacherLogins = [
+    {
+        teacherLoginId: "teacher-login-earth",
+        userId: "teacher-earth",
+        username: "teacher",
+        password: "teacher123456",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
+    }
+];
 export const mockCourses = [
     {
         courseId: "course-10",
