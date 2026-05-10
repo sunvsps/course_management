@@ -6,7 +6,7 @@ import { JWT } from "google-auth-library";
 const spreadsheetId = required("GOOGLE_SPREADSHEET_ID");
 const email = required("GOOGLE_SERVICE_ACCOUNT_EMAIL");
 const privateKey = required("GOOGLE_PRIVATE_KEY").replace(/\\n/g, "\n");
-const tabs = ["LineProfiles", "UserLineProfiles", "Users", "Courses", "Enrollments", "Lessons", "Attendances"];
+const tabs = ["LineProfiles", "UserLineProfiles", "TeacherLogins", "Users", "Courses", "Enrollments", "Lessons", "Attendances"];
 
 const client = new JWT({
   email,

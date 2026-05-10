@@ -37,6 +37,15 @@ export type UserLineProfileRow = {
   updatedAt?: string;
 };
 
+export type TeacherLoginRow = {
+  teacherLoginId: string;
+  userId: string;
+  username: string;
+  password: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type CourseRow = {
   courseId: string;
   name: string;

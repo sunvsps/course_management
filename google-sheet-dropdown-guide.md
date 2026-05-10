@@ -16,6 +16,12 @@ userId,displayName,pictureUrl,birthDate,role,createdAt,updatedAt
 userLineProfileId,userId,lineProfileId,relationship,isPrimary,createdAt,updatedAt
 ```
 
+เพิ่ม tab `TeacherLogins` สำหรับบัญชีครูหลายคนที่ login ผ่าน `/teacher`:
+
+```csv
+teacherLoginId,userId,username,password,createdAt,updatedAt
+```
+
 แนะนำให้เพิ่ม column ใน tab `Enrollments` เป็นแบบนี้:
 
 ```csv

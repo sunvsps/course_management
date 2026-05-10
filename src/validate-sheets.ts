@@ -18,6 +18,18 @@ for (const link of db.userLineProfiles) {
   }
 }
 
+for (const teacherLogin of db.teacherLogins) {
+  if (!teacherLogin.teacherLoginId) issues.push(`TeacherLogins: missing teacherLoginId`);
+  if (!teacherLogin.username) issues.push(`TeacherLogins: ${teacherLogin.teacherLoginId} is missing username`);
+  if (!teacherLogin.password) issues.push(`TeacherLogins: ${teacherLogin.teacherLoginId} is missing password`);
+  const user = db.users.find((item) => item.userId === teacherLogin.userId);
+  if (!user) {
+    issues.push(`TeacherLogins: ${teacherLogin.teacherLoginId} references missing userId ${teacherLogin.userId}`);
+  } else if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
+    issues.push(`TeacherLogins: ${teacherLogin.teacherLoginId} references non-teacher userId ${teacherLogin.userId}`);
+  }
+}
+
 for (const course of db.courses) {
   if (!course.courseId) issues.push(`Courses: missing courseId for ${course.name || "(blank course)"}`);
   if (!["CLASS", "HOUR"].includes(course.courseType)) {
@@ -54,6 +66,7 @@ console.log("Google Sheet relation check");
 console.log({
   lineProfiles: db.lineProfiles.length,
   userLineProfiles: db.userLineProfiles.length,
+  teacherLogins: db.teacherLogins.length,
   users: db.users.length,
   courses: db.courses.length,
   enrollments: db.enrollments.length,

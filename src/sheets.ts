@@ -7,6 +7,7 @@ import {
   mockEnrollments,
   mockLineProfiles,
   mockLessons,
+  mockTeacherLogins,
   mockUserLineProfiles,
   mockUsers
 } from "./mock-data.js";
@@ -16,6 +17,7 @@ import type {
   EnrollmentRow,
   LessonRow,
   LineProfileRow,
+  TeacherLoginRow,
   UserLineProfileRow,
   UserRow
 } from "./types.js";
@@ -25,6 +27,7 @@ const scopes = ["https://www.googleapis.com/auth/spreadsheets"];
 type SheetName =
   | "LineProfiles"
   | "UserLineProfiles"
+  | "TeacherLogins"
   | "Users"
   | "Courses"
   | "Enrollments"
@@ -34,6 +37,7 @@ type SheetName =
 export type SheetDatabase = {
   lineProfiles: LineProfileRow[];
   userLineProfiles: UserLineProfileRow[];
+  teacherLogins: TeacherLoginRow[];
   users: UserRow[];
   courses: CourseRow[];
   enrollments: EnrollmentRow[];
@@ -46,6 +50,7 @@ export async function loadSheetDatabase(): Promise<SheetDatabase> {
     return {
       lineProfiles: mockLineProfiles,
       userLineProfiles: mockUserLineProfiles,
+      teacherLogins: mockTeacherLogins,
       users: mockUsers,
       courses: mockCourses,
       enrollments: mockEnrollments,
@@ -54,9 +59,10 @@ export async function loadSheetDatabase(): Promise<SheetDatabase> {
     };
   }
 
-  const [lineProfiles, userLineProfiles, users, courses, enrollments, lessons, attendances] = await Promise.all([
+  const [lineProfiles, userLineProfiles, teacherLogins, users, courses, enrollments, lessons, attendances] = await Promise.all([
     readOptionalSheet("LineProfiles"),
     readOptionalSheet("UserLineProfiles"),
+    readOptionalSheet("TeacherLogins"),
     readSheet("Users"),
     readSheet("Courses"),
     readSheet("Enrollments"),
@@ -67,6 +73,7 @@ export async function loadSheetDatabase(): Promise<SheetDatabase> {
   return {
     lineProfiles: lineProfiles.map(toLineProfile),
     userLineProfiles: userLineProfiles.map(toUserLineProfile),
+    teacherLogins: teacherLogins.map(toTeacherLogin),
     users: users.map(toUser),
     courses: courses.map(toCourse),
     enrollments: enrollments.map(toEnrollment),
@@ -225,6 +232,63 @@ export async function deleteUserLineProfileRow(userLineProfileId: string) {
   }
 
   await deleteSheetObjectById("UserLineProfiles", "userLineProfileId", userLineProfileId);
+}
+
+export async function createTeacherLoginRow(input: TeacherLoginRow) {
+  const now = new Date().toISOString();
+  const teacherLogin: TeacherLoginRow = {
+    ...input,
+    teacherLoginId: input.teacherLoginId || `teacher-login-${shortId()}`,
+    createdAt: input.createdAt || now,
+    updatedAt: now
+  };
+
+  if (config.MOCK_SHEET_ENABLED) {
+    ensureMockUnique(mockTeacherLogins, "teacherLoginId", teacherLogin.teacherLoginId);
+    ensureMockUnique(mockTeacherLogins, "username", teacherLogin.username);
+    mockTeacherLogins.push(teacherLogin);
+    return teacherLogin;
+  }
+
+  await ensureSheetUnique("TeacherLogins", "teacherLoginId", teacherLogin.teacherLoginId);
+  await ensureSheetUnique("TeacherLogins", "username", teacherLogin.username);
+  await appendSheetObject("TeacherLogins", teacherLoginToSheetObject(teacherLogin));
+  return teacherLogin;
+}
+
+export async function updateTeacherLoginRow(teacherLoginId: string, input: TeacherLoginRow) {
+  const now = new Date().toISOString();
+  const existing = config.MOCK_SHEET_ENABLED
+    ? mockTeacherLogins.find((item) => item.teacherLoginId === teacherLoginId)
+    : (await loadSheetDatabase()).teacherLogins.find((item) => item.teacherLoginId === teacherLoginId);
+  const teacherLogin: TeacherLoginRow = {
+    ...input,
+    teacherLoginId,
+    createdAt: existing?.createdAt || input.createdAt || now,
+    updatedAt: now
+  };
+
+  if (config.MOCK_SHEET_ENABLED) {
+    const duplicate = mockTeacherLogins.find((item) => item.username === teacherLogin.username && item.teacherLoginId !== teacherLoginId);
+    if (duplicate) throw new Error(`Duplicate username: ${teacherLogin.username}`);
+    updateMockRow(mockTeacherLogins, "teacherLoginId", teacherLoginId, teacherLogin);
+    return teacherLogin;
+  }
+
+  const duplicate = (await loadSheetDatabase()).teacherLogins
+    .find((item) => item.username === teacherLogin.username && item.teacherLoginId !== teacherLoginId);
+  if (duplicate) throw new Error(`Duplicate username: ${teacherLogin.username}`);
+  await updateSheetObjectById("TeacherLogins", "teacherLoginId", teacherLoginId, teacherLoginToSheetObject(teacherLogin));
+  return teacherLogin;
+}
+
+export async function deleteTeacherLoginRow(teacherLoginId: string) {
+  if (config.MOCK_SHEET_ENABLED) {
+    deleteMockRow(mockTeacherLogins, "teacherLoginId", teacherLoginId);
+    return;
+  }
+
+  await deleteSheetObjectById("TeacherLogins", "teacherLoginId", teacherLoginId);
 }
 
 export async function createCourseRow(input: CourseRow) {
@@ -716,6 +780,17 @@ function toUserLineProfile(row: Record<string, string>): UserLineProfileRow {
   };
 }
 
+function toTeacherLogin(row: Record<string, string>): TeacherLoginRow {
+  return {
+    teacherLoginId: row.teacherLoginId,
+    userId: row.userId,
+    username: row.username,
+    password: row.password,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt
+  };
+}
+
 function toUser(row: Record<string, string>): UserRow {
   return {
     userId: row.userId,
@@ -821,6 +896,17 @@ function userLineProfileToSheetObject(link: UserLineProfileRow) {
     isPrimary: link.isPrimary ? "TRUE" : "",
     createdAt: link.createdAt ?? "",
     updatedAt: link.updatedAt ?? ""
+  };
+}
+
+function teacherLoginToSheetObject(teacherLogin: TeacherLoginRow) {
+  return {
+    teacherLoginId: teacherLogin.teacherLoginId,
+    userId: teacherLogin.userId,
+    username: teacherLogin.username,
+    password: teacherLogin.password,
+    createdAt: teacherLogin.createdAt ?? "",
+    updatedAt: teacherLogin.updatedAt ?? ""
   };
 }
 
