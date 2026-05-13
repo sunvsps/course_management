@@ -6,24 +6,27 @@ import {
   createAttendanceRow,
   createCourseRow,
   createEnrollmentRow,
+  createTeacherLoginRow,
   createUserLineProfileRow,
   createUserRow,
   deleteAttendanceRow,
   deleteCourseRow,
   deleteEnrollmentRow,
+  deleteTeacherLoginRow,
   deleteUserLineProfileRow,
   deleteUserRow,
   loadSheetDatabase,
   updateAttendanceRow,
   updateCourseRow,
   updateEnrollmentRow,
+  updateTeacherLoginRow,
   updateUserLineProfileRow,
   updateUserRow
 } from "../sheets.js";
-import type { AttendanceRow, CourseRow, EnrollmentRow, UserLineProfileRow, UserRow } from "../types.js";
+import type { AttendanceRow, CourseRow, EnrollmentRow, TeacherLoginRow, UserLineProfileRow, UserRow } from "../types.js";
 
 const loginSchema = z.object({
-  username: z.string().min(1),
+  username: z.string().trim().toLowerCase().min(1),
   password: z.string().min(1)
 });
 
@@ -48,6 +51,13 @@ const userLineProfileSchema = z.object({
     (value) => value === true || value === "true" || value === "TRUE" || value === "1",
     z.boolean().default(false)
   )
+});
+
+const teacherLoginSchema = z.object({
+  teacherLoginId: z.string().trim().optional().default(""),
+  userId: z.string().trim().min(1),
+  username: z.string().trim().toLowerCase().min(1),
+  password: z.string().trim().min(1)
 });
 
 const courseSchema = z.object({
@@ -158,6 +168,23 @@ export async function adminRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  app.post("/teacher-logins", { preHandler: requireAdmin }, async (request) => {
+    const teacherLogin = toTeacherLoginRow(teacherLoginSchema.parse(request.body));
+    return { teacherLogin: await createTeacherLoginRow(teacherLogin) };
+  });
+
+  app.put("/teacher-logins/:id", { preHandler: requireAdmin }, async (request) => {
+    const id = getId(request);
+    const teacherLogin = toTeacherLoginRow(teacherLoginSchema.parse(request.body), id);
+    return { teacherLogin: await updateTeacherLoginRow(id, teacherLogin) };
+  });
+
+  app.delete("/teacher-logins/:id", { preHandler: requireAdmin }, async (request) => {
+    const id = getId(request);
+    await deleteTeacherLoginRow(id);
+    return { ok: true };
+  });
+
   app.post("/courses", { preHandler: requireAdmin }, async (request) => {
     const course = toCourseRow(courseSchema.parse(request.body));
     return { course: await createCourseRow(course) };
@@ -247,6 +274,18 @@ function toUserLineProfileRow(
   };
 }
 
+function toTeacherLoginRow(
+  input: z.infer<typeof teacherLoginSchema>,
+  fixedTeacherLoginId?: string
+): TeacherLoginRow {
+  return {
+    teacherLoginId: fixedTeacherLoginId || input.teacherLoginId || "",
+    userId: input.userId,
+    username: input.username,
+    password: input.password
+  };
+}
+
 function toCourseRow(input: z.infer<typeof courseSchema>, fixedCourseId?: string): CourseRow {
   return {
     courseId: fixedCourseId || input.courseId || "",
@@ -324,6 +363,10 @@ function enrichDatabase(db: Awaited<ReturnType<typeof loadSheetDatabase>>) {
       ...link,
       userDisplayName: usersById.get(link.userId)?.displayName ?? "",
       lineDisplayName: db.lineProfiles.find((profile) => profile.lineProfileId === link.lineProfileId)?.displayName ?? ""
+    })),
+    teacherLogins: db.teacherLogins.map((teacherLogin) => ({
+      ...teacherLogin,
+      userDisplayName: usersById.get(teacherLogin.userId)?.displayName ?? ""
     })),
     users: db.users,
     courses: db.courses,

@@ -4,6 +4,7 @@ import type {
   EnrollmentRow,
   LessonRow,
   LineProfileRow,
+  TeacherLoginRow,
   UserLineProfileRow,
   UserRow
 } from "./types.js";
@@ -45,6 +46,17 @@ export const mockUsers: UserRow[] = [
     userId: "teacher-earth",
     displayName: "ครูเอิร์ธ",
     role: "INSTRUCTOR",
+    createdAt: mockTimestamp,
+    updatedAt: mockTimestamp
+  }
+];
+
+export const mockTeacherLogins: TeacherLoginRow[] = [
+  {
+    teacherLoginId: "teacher-login-earth",
+    userId: "teacher-earth",
+    username: "teacher",
+    password: "teacher123456",
     createdAt: mockTimestamp,
     updatedAt: mockTimestamp
   }

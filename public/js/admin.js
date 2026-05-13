@@ -7,6 +7,7 @@ const navItems = [
   { id: "attendances", label: "Attendances" },
   { id: "lineProfiles", label: "LineProfiles" },
   { id: "userLineProfiles", label: "UserLineProfiles" },
+  { id: "teacherLogins", label: "TeacherLogins" },
   { id: "courses", label: "Courses" },
   { id: "enrollments", label: "Enrollments" },
   { id: "users", label: "Users" }
@@ -32,6 +33,7 @@ const state = {
   filters: {
     lineProfiles: { search: "" },
     userLineProfiles: { userId: "", lineProfileId: "" },
+    teacherLogins: { userId: "", search: "" },
     users: { role: "", search: "" },
     courses: { courseType: "", search: "" },
     enrollments: { instructorId: "", userId: "", courseId: "", status: "" },
@@ -122,6 +124,7 @@ function renderCurrentView() {
   if (state.view === "attendances") return renderAttendances();
   if (state.view === "lineProfiles") return renderLineProfiles();
   if (state.view === "userLineProfiles") return renderUserLineProfiles();
+  if (state.view === "teacherLogins") return renderTeacherLogins();
   if (state.view === "courses") return renderCourses();
   if (state.view === "enrollments") return renderEnrollments();
   if (state.view === "users") return renderUsers();
@@ -220,6 +223,40 @@ function renderUserLineProfiles() {
   bindTableActions("userLineProfile", "/user-line-profiles");
 }
 
+function renderTeacherLogins() {
+  const editing = state.editing?.type === "teacherLogin"
+    ? state.data.teacherLogins.find((teacherLogin) => teacherLogin.teacherLoginId === state.editing.id)
+    : null;
+  const teacherLogins = filteredTeacherLogins();
+
+  content.innerHTML = `
+    ${panelHeader("TeacherLogins", "บัญชี username/password สำหรับครูหลายคน")}
+    <section class="adminPanel">
+      <form class="adminForm adminFormGrid" data-form="teacher-logins">
+        <label>Login ID<input name="teacherLoginId" value="${escapeHtml(editing?.teacherLoginId ?? "")}" readonly/></label>
+        <label>Teacher${select("userId", instructorOptions(), editing?.userId ?? "")}</label>
+        <label>Username<input name="username" value="${escapeHtml(editing?.username ?? "")}" required /></label>
+        <label>Password<input name="password" value="${escapeHtml(editing?.password ?? "")}" required /></label>
+        <div class="adminFormActions">
+          <button type="submit">${editing ? "บันทึกการแก้ไข" : "เพิ่ม Teacher Login"}</button>
+          ${editing ? `<button class="secondary" type="button" data-cancel-edit>ยกเลิก</button>` : ""}
+        </div>
+      </form>
+    </section>
+    <section class="adminPanel">
+      ${filterBar("teacherLogins", [
+        filterSelect("userId", "Teacher", [["", "ทุกครู"], ...instructorOptions()], state.filters.teacherLogins.userId),
+        filterInput("search", "ค้นหา", state.filters.teacherLogins.search, "username หรือชื่อครู")
+      ])}
+      ${teacherLoginTable(teacherLogins)}
+    </section>
+  `;
+
+  bindCrudForm("teacherLogin", "/teacher-logins", editing?.teacherLoginId);
+  bindFilters("teacherLogins");
+  bindTableActions("teacherLogin", "/teacher-logins");
+}
+
 function renderUsers() {
   const editing = state.editing?.type === "user"
     ? state.data.users.find((user) => user.userId === state.editing.id)
@@ -230,7 +267,7 @@ function renderUsers() {
     ${panelHeader("Users", "เพิ่ม แก้ไข ลบ ผู้เรียน/ผู้สอน/admin")}
     <section class="adminPanel">
       <form class="adminForm adminFormGrid" data-form="users">
-        <label>User ID<input name="userId" value="${escapeHtml(editing?.userId ?? "")}" ${editing ? "readonly" : ""} placeholder="เว้นว่างเพื่อให้ระบบสร้าง" /></label>
+        <label>User ID<input name="userId" value="${escapeHtml(editing?.userId ?? "")}" readonly/></label>
         <label>ชื่อ<input name="displayName" value="${escapeHtml(editing?.displayName ?? "")}" required /></label>
         <label>วันเกิด<input name="birthDate" type="date" value="${escapeHtml(editing?.birthDate ?? "")}" /></label>
         <label>Role${select("role", [["STUDENT", "STUDENT"], ["INSTRUCTOR", "INSTRUCTOR"], ["ADMIN", "ADMIN"]], editing?.role ?? "STUDENT")}</label>
@@ -543,6 +580,16 @@ function userLineProfileTable(links) {
     link.relationship || "-",
     link.isPrimary ? "Yes" : "-",
     rowActions(link.userLineProfileId)
+  ]));
+}
+
+function teacherLoginTable(teacherLogins) {
+  return table(["Login ID", "Teacher", "Username", "Password", ""], teacherLogins.map((teacherLogin) => [
+    teacherLogin.teacherLoginId,
+    teacherLogin.userDisplayName || teacherLogin.userId,
+    teacherLogin.username,
+    teacherLogin.password ? "••••••••" : "-",
+    rowActions(teacherLogin.teacherLoginId)
   ]));
 }
 
@@ -964,6 +1011,22 @@ function filteredUserLineProfiles() {
     if (filters.userId && link.userId !== filters.userId) return false;
     if (filters.lineProfileId && link.lineProfileId !== filters.lineProfileId) return false;
     return true;
+  });
+}
+
+function filteredTeacherLogins() {
+  const filters = state.filters.teacherLogins;
+  const search = filters.search.trim().toLowerCase();
+
+  return state.data.teacherLogins.filter((teacherLogin) => {
+    if (filters.userId && teacherLogin.userId !== filters.userId) return false;
+    if (!search) return true;
+    return [
+      teacherLogin.teacherLoginId,
+      teacherLogin.userId,
+      teacherLogin.userDisplayName,
+      teacherLogin.username
+    ].join(" ").toLowerCase().includes(search);
   });
 }
 
