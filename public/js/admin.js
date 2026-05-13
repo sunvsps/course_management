@@ -28,6 +28,7 @@ const state = {
   editing: null,
   data: null,
   attendancePage: 1,
+  attendanceDateSort: "desc",
   filters: {
     lineProfiles: { search: "" },
     userLineProfiles: { userId: "", lineProfileId: "" },
@@ -130,7 +131,7 @@ function renderCurrentView() {
 function renderPortal() {
   const data = state.data;
   const activeEnrollments = data.enrollments.filter((item) => item.status === "ACTIVE").length;
-  const latestAttendances = data.attendances.slice(0, 5);
+  const latestAttendances = sortAttendancesByDate(data.attendances).slice(0, 5);
 
   content.innerHTML = `
     <section class="adminStats">
@@ -158,6 +159,7 @@ function renderPortal() {
     </section>
   `;
 
+  bindAttendanceDateSort();
   content.querySelectorAll("[data-view-shortcut]").forEach((button) => {
     button.onclick = () => {
       state.view = button.dataset.viewShortcut;
@@ -327,7 +329,7 @@ function renderAttendances() {
     ? state.data.attendances.find((attendance) => attendance.attendanceId === state.editing.id)
     : null;
   const selectedUserId = selectedAttendanceUserId(editing);
-  const attendances = filteredAttendances();
+  const attendances = sortAttendancesByDate(filteredAttendances());
   const pageCount = Math.max(Math.ceil(attendances.length / attendancePageSize), 1);
   state.attendancePage = Math.min(Math.max(state.attendancePage, 1), pageCount);
   const pageRows = paginateRows(attendances, state.attendancePage, attendancePageSize);
@@ -350,6 +352,7 @@ function renderAttendances() {
   bindCrudForm("attendance", "/attendances", editing?.attendanceId);
   bindAttendanceStudentSelect(editing?.enrollmentId ?? "");
   bindFilters("attendances");
+  bindAttendanceDateSort();
   bindAttendancePagination();
   bindTableActions("attendance", "/attendances");
 }
@@ -425,6 +428,16 @@ function bindAttendancePagination() {
   content.querySelectorAll("[data-attendance-page]").forEach((button) => {
     button.onclick = () => {
       state.attendancePage = Number(button.dataset.attendancePage) || 1;
+      renderCurrentView();
+    };
+  });
+}
+
+function bindAttendanceDateSort() {
+  content.querySelectorAll("[data-attendance-date-sort]").forEach((button) => {
+    button.onclick = () => {
+      state.attendanceDateSort = state.attendanceDateSort === "asc" ? "desc" : "asc";
+      state.attendancePage = 1;
       renderCurrentView();
     };
   });
@@ -706,7 +719,10 @@ function courseUsagePanel(enrollment, course, usedValue) {
 }
 
 function attendanceTable(attendances, withActions) {
-  return table(["วันที่", "ผู้เรียน", "คอร์ส", "ครูประจำ", "คุณครูเช็คอิน", "ใช้ไป", "คะแนน", withActions ? "" : null].filter(Boolean), attendances.map((attendance) => {
+  if (attendances.length === 0) return emptyAdmin("ยังไม่มีข้อมูล");
+
+  const headers = ["ผู้เรียน", "คอร์ส", "ครูประจำ", "คุณครูเช็คอิน", "ใช้ไป", "คะแนน", withActions ? "" : null].filter(Boolean);
+  const rows = attendances.map((attendance) => {
     const course = findCourse(attendance.courseId);
     const cells = [
       formatDate(attendance.checkedInAt),
@@ -720,7 +736,36 @@ function attendanceTable(attendances, withActions) {
 
     if (withActions) cells.push(rowActions(attendance.attendanceId));
     return cells;
-  }));
+  });
+
+  return `
+    <div class="adminTableWrap">
+      <table class="adminTable">
+        <thead>
+          <tr>
+            <th>${attendanceDateSortHeader()}</th>
+            ${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `
+            <tr>
+              ${row.map((cell) => `<td>${tableCell(cell)}</td>`).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function attendanceDateSortHeader() {
+  const isAscending = state.attendanceDateSort === "asc";
+  return `
+    <button class="tableSortButton" type="button" data-attendance-date-sort aria-label="Sort attendance date ${isAscending ? "descending" : "ascending"}">
+      วันที่ <span aria-hidden="true">${isAscending ? "↑" : "↓"}</span>
+    </button>
+  `;
 }
 
 function attendancePagination(totalRows, currentPage, pageCount) {
@@ -741,6 +786,18 @@ function attendancePagination(totalRows, currentPage, pageCount) {
 function paginateRows(rows, page, pageSize) {
   const start = (page - 1) * pageSize;
   return rows.slice(start, start + pageSize);
+}
+
+function sortAttendancesByDate(attendances) {
+  return [...attendances].sort((a, b) => {
+    const delta = attendanceTime(a) - attendanceTime(b);
+    return state.attendanceDateSort === "asc" ? delta : -delta;
+  });
+}
+
+function attendanceTime(attendance) {
+  const timestamp = new Date(attendance.checkedInAt).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function table(headers, rows) {
