@@ -51,14 +51,23 @@ for (const enrollment of db.enrollments) {
         issues.push(`Enrollments: ${enrollment.enrollmentId} references missing courseId ${enrollment.courseId}`);
     }
 }
-for (const lesson of db.lessons) {
-    if (!db.enrollments.some((enrollment) => enrollment.enrollmentId === lesson.enrollmentId)) {
-        issues.push(`Lessons: ${lesson.lessonId} references missing enrollmentId ${lesson.enrollmentId}`);
-    }
-}
 for (const attendance of db.attendances) {
     if (!db.enrollments.some((enrollment) => enrollment.enrollmentId === attendance.enrollmentId)) {
         issues.push(`Attendances: ${attendance.attendanceId} references missing enrollmentId ${attendance.enrollmentId}`);
+    }
+}
+for (const prePostAssessment of db.prePostAssessments) {
+    if (!db.enrollments.some((enrollment) => enrollment.enrollmentId === prePostAssessment.enrollmentId)) {
+        issues.push(`PrePostAssessments: ${prePostAssessment.assessmentId} references missing enrollmentId ${prePostAssessment.enrollmentId}`);
+    }
+    if (!["PRE", "POST"].includes(prePostAssessment.assessmentType)) {
+        issues.push(`PrePostAssessments: ${prePostAssessment.assessmentId} has invalid assessmentType ${prePostAssessment.assessmentType}`);
+    }
+    if (!["PARENT", "INSTRUCTOR"].includes(prePostAssessment.raterRole)) {
+        issues.push(`PrePostAssessments: ${prePostAssessment.assessmentId} has invalid rateRole ${prePostAssessment.raterRole}`);
+    }
+    if (prePostAssessment.raterRole === "PARENT" && !prePostAssessment.userLineProfileId) {
+        issues.push(`PrePostAssessments: ${prePostAssessment.assessmentId} parent prePostAssessment is missing userLineProfileId`);
     }
 }
 console.log("Google Sheet relation check");
@@ -69,8 +78,8 @@ console.log({
     users: db.users.length,
     courses: db.courses.length,
     enrollments: db.enrollments.length,
-    lessons: db.lessons.length,
-    attendances: db.attendances.length
+    attendances: db.attendances.length,
+    prePostAssessments: db.prePostAssessments.length
 });
 if (issues.length === 0) {
     console.log("OK: no relation issues found");

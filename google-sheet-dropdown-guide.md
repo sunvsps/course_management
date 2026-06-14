@@ -40,6 +40,12 @@ attendanceId,userDisplayName,courseName,enrollmentId,instructorName,checkedInAt,
 
 คุณครูเลือก `userDisplayName` และ `courseName` จาก dropdown แล้ว script จะหา `enrollmentId` ที่ตรงกับผู้เรียนและคอร์สนั้นให้อัตโนมัติ
 
+เพิ่ม tab `PrePostAssessments` สำหรับแบบประเมิน Pre/Post:
+
+```csv
+assessmentId,enrollmentId,assessmentType,userLineProfileId,rateRole,continuousActivityScore,listeningInstructionScore,emotionalControlScore,waitingSelfControlScore,concentrationScore,physicalBalanceScore,planningProblemSolvingScore,socialInteractionScore,confidenceNewExperienceScore,activityCooperationScore,note,createdAt,updatedAt
+```
+
 ## Dropdown ที่ script จะสร้าง
 
 - `Enrollments.userDisplayName` ดึงจาก `Users.displayName`
@@ -49,7 +55,9 @@ attendanceId,userDisplayName,courseName,enrollmentId,instructorName,checkedInAt,
 - `Users.role` เลือกจาก `STUDENT`, `INSTRUCTOR`, `ADMIN`
 - `Courses.courseType` เลือกจาก `CLASS`, `HOUR`
 - `Enrollments.status` เลือกจาก `ACTIVE`, `PAUSED`, `COMPLETED`, `CANCELLED`
-- `Lessons.status` เลือกจาก `SCHEDULED`, `CHECKED_IN`, `CANCELLED`
+- `PrePostAssessments.userLineProfileId` ดึงจาก `UserLineProfiles.userLineProfileId`
+- `PrePostAssessments.assessmentType` เลือกจาก `PRE`, `POST`
+- `PrePostAssessments.rateRole` เลือกจาก `PARENT`, `INSTRUCTOR`
 
 Field ที่เป็น ID เช่น `userId`, `courseId`, `enrollmentId` จะไม่มี dropdown แล้ว เพราะระบบจะเติมให้เองจากชื่อที่คุณครูเลือก
 
