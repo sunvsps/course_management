@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { JWT } from "google-auth-library";
 import { config } from "./config.js";
-import { mockAttendances, mockCourses, mockEnrollments, mockLineProfiles, mockLessons, mockTeacherLogins, mockUserLineProfiles, mockUsers } from "./mock-data.js";
+import { mockPrePostAssessments, mockAttendances, mockCourses, mockEnrollments, mockLineProfiles, mockTeacherLogins, mockUserLineProfiles, mockUsers } from "./mock-data.js";
 const scopes = ["https://www.googleapis.com/auth/spreadsheets"];
 export async function loadSheetDatabase() {
     if (config.MOCK_SHEET_ENABLED) {
@@ -12,19 +12,19 @@ export async function loadSheetDatabase() {
             users: mockUsers,
             courses: mockCourses,
             enrollments: mockEnrollments,
-            lessons: mockLessons,
-            attendances: mockAttendances
+            attendances: mockAttendances,
+            prePostAssessments: mockPrePostAssessments
         };
     }
-    const [lineProfiles, userLineProfiles, teacherLogins, users, courses, enrollments, lessons, attendances] = await Promise.all([
+    const [lineProfiles, userLineProfiles, teacherLogins, users, courses, enrollments, attendances, prePostAssessments] = await Promise.all([
         readOptionalSheet("LineProfiles"),
         readOptionalSheet("UserLineProfiles"),
         readOptionalSheet("TeacherLogins"),
         readSheet("Users"),
         readSheet("Courses"),
         readSheet("Enrollments"),
-        readSheet("Lessons"),
-        readSheet("Attendances")
+        readSheet("Attendances"),
+        readOptionalSheet("PrePostAssessments")
     ]);
     return {
         lineProfiles: lineProfiles.map(toLineProfile),
@@ -33,8 +33,8 @@ export async function loadSheetDatabase() {
         users: users.map(toUser),
         courses: courses.map(toCourse),
         enrollments: enrollments.map(toEnrollment),
-        lessons: lessons.map(toLesson),
-        attendances: attendances.map(toAttendance)
+        attendances: attendances.map(toAttendance),
+        prePostAssessments: prePostAssessments.map(toPrePostAssessment)
     };
 }
 export async function upsertLineProfile(profile) {
@@ -344,6 +344,23 @@ export async function deleteAttendanceRow(attendanceId) {
         return;
     }
     await deleteSheetObjectById("Attendances", "attendanceId", attendanceId);
+}
+export async function createPrePostAssessmentRow(input) {
+    const now = new Date().toISOString();
+    const prePostAssessment = {
+        ...input,
+        assessmentId: input.assessmentId || `prePostAssessment-${shortId()}`,
+        createdAt: input.createdAt || now,
+        updatedAt: now
+    };
+    if (config.MOCK_SHEET_ENABLED) {
+        ensureMockUnique(mockPrePostAssessments, "assessmentId", prePostAssessment.assessmentId);
+        mockPrePostAssessments.push(prePostAssessment);
+        return prePostAssessment;
+    }
+    await ensureSheetUnique("PrePostAssessments", "assessmentId", prePostAssessment.assessmentId);
+    await appendSheetObject("PrePostAssessments", prePostAssessmentToSheetObject(prePostAssessment));
+    return prePostAssessment;
 }
 export async function recalculateEnrollmentRemaining(enrollmentId) {
     const db = await loadSheetDatabase();
@@ -671,26 +688,15 @@ function lineProfileToValues(profile) {
         profile.updatedAt
     ];
 }
-function toLesson(row) {
-    return {
-        lessonId: row.lessonId,
-        enrollmentId: row.enrollmentId,
-        instructorName: row.instructorName,
-        startsAt: row.startsAt,
-        endsAt: row.endsAt,
-        status: normalizeLessonStatus(row.status),
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt
-    };
-}
 function toAttendance(row) {
     return {
         attendanceId: row.attendanceId,
+        userDisplayName: row.userDisplayName,
+        courseName: row.courseName,
         enrollmentId: row.enrollmentId,
         instructorName: row.instructorName,
         checkedInAt: row.checkedInAt,
         classesUsed: Number(row.classesUsed),
-        score: optionalNumber(row.score),
         hyperactiveScore: optionalNumber(row.hyperactiveScore),
         distractionScore: optionalNumber(row.distractionScore),
         attentionSpanScore: optionalNumber(row.attentionSpanScore),
@@ -698,6 +704,28 @@ function toAttendance(row) {
         selfEsteemScore: optionalNumber(row.selfEsteemScore),
         timeManagementScore: optionalNumber(row.timeManagementScore),
         behaviorScore: optionalNumber(row.behaviorScore),
+        note: row.note,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+    };
+}
+function toPrePostAssessment(row) {
+    return {
+        assessmentId: row.assessmentId,
+        enrollmentId: row.enrollmentId,
+        assessmentType: normalizePrePostAssessmentType(row.assessmentType),
+        raterRole: normalizePrePostRaterRole(row.rateRole || row.raterRole),
+        userLineProfileId: row.userLineProfileId,
+        continuousActivityScore: optionalNumber(row.continuousActivityScore),
+        listeningInstructionScore: optionalNumber(row.listeningInstructionScore),
+        emotionalControlScore: optionalNumber(row.emotionalControlScore),
+        waitingSelfControlScore: optionalNumber(row.waitingSelfControlScore),
+        concentrationScore: optionalNumber(row.concentrationScore),
+        physicalBalanceScore: optionalNumber(row.physicalBalanceScore),
+        planningProblemSolvingScore: optionalNumber(row.planningProblemSolvingScore),
+        socialInteractionScore: optionalNumber(row.socialInteractionScore),
+        confidenceNewExperienceScore: optionalNumber(row.confidenceNewExperienceScore),
+        activityCooperationScore: optionalNumber(row.activityCooperationScore),
         note: row.note,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt
@@ -768,13 +796,12 @@ function attendanceToSheetObject(attendance, db) {
     const course = db.courses.find((item) => item.courseId === enrollment?.courseId);
     return {
         attendanceId: attendance.attendanceId,
-        userDisplayName: user?.displayName ?? "",
-        courseName: course?.name ?? "",
+        userDisplayName: user?.displayName ?? attendance.userDisplayName ?? "",
+        courseName: course?.name ?? attendance.courseName ?? "",
         enrollmentId: attendance.enrollmentId,
         instructorName: attendance.instructorName,
         checkedInAt: attendance.checkedInAt,
         classesUsed: attendance.classesUsed,
-        score: attendance.score ?? "",
         hyperactiveScore: attendance.hyperactiveScore ?? "",
         distractionScore: attendance.distractionScore ?? "",
         attentionSpanScore: attendance.attentionSpanScore ?? "",
@@ -785,6 +812,28 @@ function attendanceToSheetObject(attendance, db) {
         note: attendance.note ?? "",
         createdAt: attendance.createdAt ?? "",
         updatedAt: attendance.updatedAt ?? ""
+    };
+}
+function prePostAssessmentToSheetObject(prePostAssessment) {
+    return {
+        assessmentId: prePostAssessment.assessmentId,
+        enrollmentId: prePostAssessment.enrollmentId,
+        assessmentType: prePostAssessment.assessmentType,
+        userLineProfileId: prePostAssessment.userLineProfileId ?? "",
+        rateRole: prePostAssessment.raterRole,
+        continuousActivityScore: prePostAssessment.continuousActivityScore ?? "",
+        listeningInstructionScore: prePostAssessment.listeningInstructionScore ?? "",
+        emotionalControlScore: prePostAssessment.emotionalControlScore ?? "",
+        waitingSelfControlScore: prePostAssessment.waitingSelfControlScore ?? "",
+        concentrationScore: prePostAssessment.concentrationScore ?? "",
+        physicalBalanceScore: prePostAssessment.physicalBalanceScore ?? "",
+        planningProblemSolvingScore: prePostAssessment.planningProblemSolvingScore ?? "",
+        socialInteractionScore: prePostAssessment.socialInteractionScore ?? "",
+        confidenceNewExperienceScore: prePostAssessment.confidenceNewExperienceScore ?? "",
+        activityCooperationScore: prePostAssessment.activityCooperationScore ?? "",
+        note: prePostAssessment.note ?? "",
+        createdAt: prePostAssessment.createdAt ?? "",
+        updatedAt: prePostAssessment.updatedAt ?? ""
     };
 }
 async function ensureSheetUnique(sheetName, idField, id) {
@@ -862,10 +911,11 @@ function normalizeStatus(status) {
         return status;
     return "ACTIVE";
 }
-function normalizeLessonStatus(status) {
-    if (status === "CHECKED_IN" || status === "CANCELLED")
-        return status;
-    return "SCHEDULED";
+function normalizePrePostAssessmentType(type) {
+    return type?.trim().toUpperCase() === "POST" ? "POST" : "PRE";
+}
+function normalizePrePostRaterRole(role) {
+    return role?.trim().toUpperCase() === "INSTRUCTOR" ? "INSTRUCTOR" : "PARENT";
 }
 function required(value, name) {
     if (!value)

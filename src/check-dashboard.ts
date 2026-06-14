@@ -34,6 +34,5 @@ console.log("Dashboard summary:", {
   students: studentDashboards.length,
   enrollments: enrollments.length,
   courses: enrollments.map((enrollment) => enrollment.course?.name),
-  lessons: enrollments.reduce((sum, enrollment) => sum + enrollment.lessons.length, 0),
   attendances: enrollments.reduce((sum, enrollment) => sum + enrollment.attendances.length, 0)
 });

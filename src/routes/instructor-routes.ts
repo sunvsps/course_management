@@ -1,7 +1,7 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireInstructor, signSession } from "../auth.js";
-import { createAttendanceRow, loadSheetDatabase } from "../sheets.js";
+import { createPrePostAssessmentRow, createAttendanceRow, loadSheetDatabase } from "../sheets.js";
 import { getTeacherDashboard } from "../teacher-service.js";
 
 const loginSchema = z.object({
@@ -25,6 +25,22 @@ const attendanceSchema = z.object({
   selfEsteemScore: optionalScoreSchema,
   timeManagementScore: optionalScoreSchema,
   behaviorScore: optionalScoreSchema,
+  note: z.string().trim().optional().default("")
+});
+
+const prePostAssessmentSchema = z.object({
+  enrollmentId: z.string().trim().min(1),
+  assessmentType: z.enum(["PRE", "POST"]),
+  continuousActivityScore: optionalScoreSchema,
+  listeningInstructionScore: optionalScoreSchema,
+  emotionalControlScore: optionalScoreSchema,
+  waitingSelfControlScore: optionalScoreSchema,
+  concentrationScore: optionalScoreSchema,
+  physicalBalanceScore: optionalScoreSchema,
+  planningProblemSolvingScore: optionalScoreSchema,
+  socialInteractionScore: optionalScoreSchema,
+  confidenceNewExperienceScore: optionalScoreSchema,
+  activityCooperationScore: optionalScoreSchema,
   note: z.string().trim().optional().default("")
 });
 
@@ -88,4 +104,50 @@ export async function instructorRoutes(app: FastifyInstance) {
 
     return { attendance };
   });
+
+  const createPrePostAssessment = async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = prePostAssessmentSchema.parse(request.body);
+    const instructorId = request.user!.userId;
+    const instructorName = request.user!.instructorName || request.user!.displayName;
+    const db = await loadSheetDatabase();
+    const enrollment = db.enrollments.find((item) => item.enrollmentId === body.enrollmentId);
+
+    if (!enrollment || enrollment.instructorId !== instructorId) {
+      return reply.code(403).send({ error: "This enrollment is not assigned to this teacher" });
+    }
+
+    const duplicate = db.prePostAssessments.find((item) => {
+      return item.enrollmentId === body.enrollmentId
+        && item.assessmentType === body.assessmentType
+        && item.raterRole === "INSTRUCTOR"
+        && !item.userLineProfileId;
+    });
+
+    if (duplicate) {
+      return reply.code(409).send({ error: "Pre/Post assessment already submitted" });
+    }
+
+    const prePostAssessment = await createPrePostAssessmentRow({
+      assessmentId: "",
+      enrollmentId: body.enrollmentId,
+      assessmentType: body.assessmentType,
+      raterRole: "INSTRUCTOR",
+      continuousActivityScore: body.continuousActivityScore,
+      listeningInstructionScore: body.listeningInstructionScore,
+      emotionalControlScore: body.emotionalControlScore,
+      waitingSelfControlScore: body.waitingSelfControlScore,
+      concentrationScore: body.concentrationScore,
+      physicalBalanceScore: body.physicalBalanceScore,
+      planningProblemSolvingScore: body.planningProblemSolvingScore,
+      socialInteractionScore: body.socialInteractionScore,
+      confidenceNewExperienceScore: body.confidenceNewExperienceScore,
+      activityCooperationScore: body.activityCooperationScore,
+      note: body.note || undefined
+    });
+
+    return { prePostAssessment, assessment: prePostAssessment };
+  };
+
+  app.post("/pre-post-assessments", { preHandler: requireInstructor }, createPrePostAssessment);
+  app.post("/assessments", { preHandler: requireInstructor }, createPrePostAssessment);
 }

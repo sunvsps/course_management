@@ -32,7 +32,16 @@ async function main() {
     }
   }
 
-  const dashboard = await api("/api/me/dashboard");
+  let dashboard;
+  try {
+    dashboard = await api("/api/me/dashboard");
+  } catch (error) {
+    if (!config.localDemoEnabled) throw error;
+    clearSessionToken();
+    const { token } = await api("/api/auth/demo", { method: "POST", auth: false });
+    setSessionToken(token);
+    dashboard = await api("/api/me/dashboard");
+  }
   // document.getElementById("logoutButton").classList.remove("hidden");
   renderStudentDashboard(dashboard);
 }
