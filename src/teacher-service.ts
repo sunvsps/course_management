@@ -38,14 +38,14 @@ function buildTeacherStudentDashboard(
     .filter((enrollment) => enrollment.userId === user.userId)
     .map((enrollment) => {
       const course = db.courses.find((item) => item.courseId === enrollment.courseId);
-      const lessons = db.lessons
-        .filter((lesson) => lesson.enrollmentId === enrollment.enrollmentId)
-        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
       const attendances = db.attendances
         .filter((attendance) => attendance.enrollmentId === enrollment.enrollmentId)
         .sort((a, b) => new Date(b.checkedInAt).getTime() - new Date(a.checkedInAt).getTime());
       const allAttendancesForEnrollment = db.attendances
         .filter((attendance) => attendance.enrollmentId === enrollment.enrollmentId);
+      const prePostAssessments = db.prePostAssessments
+        .filter((prePostAssessment) => prePostAssessment.enrollmentId === enrollment.enrollmentId)
+        .sort((a, b) => prePostAssessmentTimestamp(b) - prePostAssessmentTimestamp(a));
       const purchasedClasses = resolvePurchasedClasses(enrollment.purchasedClasses, course?.totalClasses);
       const remainingClasses = resolveRemainingClasses(purchasedClasses, allAttendancesForEnrollment);
 
@@ -54,9 +54,10 @@ function buildTeacherStudentDashboard(
         purchasedClasses,
         remainingClasses,
         course,
-        lessons,
         attendances,
-        latestActivityAt: latestActivityAt(lessons, attendances)
+        prePostAssessments,
+        assessments: prePostAssessments,
+        latestActivityAt: latestActivityAt(attendances)
       };
     })
     .sort((a, b) => {
@@ -103,14 +104,15 @@ function statusRank(status: string) {
   return 3;
 }
 
-function latestActivityAt(
-  lessons: Array<{ startsAt: string }>,
-  attendances: Array<{ checkedInAt: string }>
-) {
+function latestActivityAt(attendances: Array<{ checkedInAt: string }>) {
   const timestamps = [
-    ...lessons.map((lesson) => new Date(lesson.startsAt).getTime()),
     ...attendances.map((attendance) => new Date(attendance.checkedInAt).getTime())
   ].filter(Number.isFinite);
 
   return new Date(Math.max(...timestamps, 0)).toISOString();
+}
+
+function prePostAssessmentTimestamp(prePostAssessment: { updatedAt?: string; createdAt?: string }) {
+  const value = new Date(prePostAssessment.updatedAt || prePostAssessment.createdAt || 0).getTime();
+  return Number.isFinite(value) ? value : 0;
 }

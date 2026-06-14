@@ -77,25 +77,12 @@ export const mockEnrollments = [
         updatedAt: mockTimestamp
     }
 ];
-export const mockLessons = [
-    {
-        lessonId: "lesson-next",
-        enrollmentId: "enroll-demo",
-        instructorName: "ครูเอิร์ธ",
-        startsAt: futureDate(1, 10),
-        endsAt: futureDate(1, 11),
-        status: "SCHEDULED",
-        createdAt: mockTimestamp,
-        updatedAt: mockTimestamp
-    }
-];
 export const mockAttendances = Array.from({ length: 5 }, (_, index) => ({
     attendanceId: `att-${index + 1}`,
     enrollmentId: "enroll-demo",
     instructorName: "ครูเอิร์ธ",
     checkedInAt: pastDate(5 - index),
     classesUsed: 1,
-    score: index % 2 === 0 ? 5 : undefined,
     hyperactiveScore: index % 2 === 0 ? 4 : undefined,
     distractionScore: index % 2 === 0 ? 3.5 : undefined,
     attentionSpanScore: index % 2 === 0 ? 4.5 : undefined,
@@ -107,12 +94,47 @@ export const mockAttendances = Array.from({ length: 5 }, (_, index) => ({
     createdAt: mockTimestamp,
     updatedAt: mockTimestamp
 }));
-function futureDate(daysFromNow, hour) {
-    const date = new Date();
-    date.setDate(date.getDate() + daysFromNow);
-    date.setHours(hour, 0, 0, 0);
-    return date.toISOString();
-}
+export const mockPrePostAssessments = [
+    {
+        assessmentId: "assessment-pre-parent-demo",
+        enrollmentId: "enroll-demo",
+        assessmentType: "PRE",
+        raterRole: "PARENT",
+        userLineProfileId: "ulp-demo",
+        continuousActivityScore: 4,
+        listeningInstructionScore: 3.5,
+        emotionalControlScore: 3,
+        waitingSelfControlScore: 3,
+        concentrationScore: 3.5,
+        physicalBalanceScore: 3,
+        planningProblemSolvingScore: 3.5,
+        socialInteractionScore: 3,
+        confidenceNewExperienceScore: 3.5,
+        activityCooperationScore: 4,
+        note: "ประเมินก่อนเริ่มคอร์ส",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
+    },
+    {
+        assessmentId: "assessment-pre-teacher-demo",
+        enrollmentId: "enroll-demo",
+        assessmentType: "PRE",
+        raterRole: "INSTRUCTOR",
+        continuousActivityScore: 4,
+        listeningInstructionScore: 4,
+        emotionalControlScore: 3.5,
+        waitingSelfControlScore: 3,
+        concentrationScore: 4,
+        physicalBalanceScore: 3.5,
+        planningProblemSolvingScore: 3.5,
+        socialInteractionScore: 3.5,
+        confidenceNewExperienceScore: 4,
+        activityCooperationScore: 4,
+        note: "ประเมินโดยครูก่อนเริ่มคอร์ส",
+        createdAt: mockTimestamp,
+        updatedAt: mockTimestamp
+    }
+];
 function pastDate(daysAgo) {
     const date = new Date();
     date.setDate(date.getDate() - daysAgo);

@@ -67,24 +67,14 @@ export type EnrollmentRow = {
   updatedAt?: string;
 };
 
-export type LessonRow = {
-  lessonId: string;
-  enrollmentId: string;
-  instructorName: string;
-  startsAt: string;
-  endsAt: string;
-  status: "SCHEDULED" | "CHECKED_IN" | "CANCELLED";
-  createdAt?: string;
-  updatedAt?: string;
-};
-
 export type AttendanceRow = {
   attendanceId: string;
+  userDisplayName?: string;
+  courseName?: string;
   enrollmentId: string;
   instructorName: string;
   checkedInAt: string;
   classesUsed: number;
-  score?: number;
   hyperactiveScore?: number;
   distractionScore?: number;
   attentionSpanScore?: number;
@@ -92,6 +82,27 @@ export type AttendanceRow = {
   selfEsteemScore?: number;
   timeManagementScore?: number;
   behaviorScore?: number;
+  note?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type PrePostAssessmentRow = {
+  assessmentId: string;
+  enrollmentId: string;
+  assessmentType: "PRE" | "POST";
+  raterRole: "PARENT" | "INSTRUCTOR";
+  userLineProfileId?: string;
+  continuousActivityScore?: number;
+  listeningInstructionScore?: number;
+  emotionalControlScore?: number;
+  waitingSelfControlScore?: number;
+  concentrationScore?: number;
+  physicalBalanceScore?: number;
+  planningProblemSolvingScore?: number;
+  socialInteractionScore?: number;
+  confidenceNewExperienceScore?: number;
+  activityCooperationScore?: number;
   note?: string;
   createdAt?: string;
   updatedAt?: string;

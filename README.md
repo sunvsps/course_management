@@ -148,21 +148,27 @@ enroll-demo,student-demo,course-10,teacher-earth,,10,ACTIVE,2026-05-09T10:00:00.
 จำนวนคงเหลือจะถูกคำนวณอัตโนมัติจาก `purchasedClasses - Attendances.classesUsed` และไม่อ่านค่าจาก `Enrollments.remainingClasses`
 หน้า `/teacher` จะใช้ `Enrollments.instructorId` เพื่อเลือกเฉพาะนักเรียนของครูคนนั้น
 
-### Lessons
-
-```csv
-lessonId,enrollmentId,instructorName,startsAt,endsAt,status,createdAt,updatedAt
-lesson-next,enroll-demo,Demo Teacher,2026-05-04T10:00:00+07:00,2026-05-04T11:00:00+07:00,SCHEDULED,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
-```
-
 ### Attendances
 
 ```csv
-attendanceId,enrollmentId,instructorName,checkedInAt,classesUsed,hyperactiveScore,distractionScore,attentionSpanScore,selfControlScore,selfEsteemScore,timeManagementScore,behaviorScore,note,createdAt,updatedAt
-att-1,enroll-demo,Demo Teacher,2026-04-28,1,4,3.5,4.5,4,5,4,5,เรียนครั้งที่ 1,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
+attendanceId,userDisplayName,courseName,enrollmentId,instructorName,checkedInAt,classesUsed,hyperactiveScore,distractionScore,attentionSpanScore,selfControlScore,selfEsteemScore,timeManagementScore,behaviorScore,note,createdAt,updatedAt
+att-1,Demo Student,Private Course 10 Classes,enroll-demo,Demo Teacher,2026-04-28,1,4,3.5,4.5,4,5,4,5,เรียนครั้งที่ 1,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
 ```
 
 คะแนนแต่ละช่องเป็น optional ถ้าว่างไว้ หน้าผู้เรียนจะไม่แสดงคะแนนช่องนั้น
+
+### PrePostAssessments
+
+เก็บแบบประเมินก่อนเริ่มคอร์สและท้ายคอร์ส แยกคะแนนจากผู้ปกครองและครูเพื่อแสดงเป็นกราฟ Pre/Post ในหน้าคอร์ส
+
+```csv
+assessmentId,enrollmentId,assessmentType,userLineProfileId,rateRole,continuousActivityScore,listeningInstructionScore,emotionalControlScore,waitingSelfControlScore,concentrationScore,physicalBalanceScore,planningProblemSolvingScore,socialInteractionScore,confidenceNewExperienceScore,activityCooperationScore,note,createdAt,updatedAt
+assessment-pre-parent-demo,enroll-demo,PRE,ulp-demo,PARENT,4,3.5,3,3,3.5,3,3.5,3,3.5,4,ประเมินก่อนเริ่มคอร์ส,2026-05-09T10:00:00.000Z,2026-05-09T10:00:00.000Z
+```
+
+`assessmentType` ใช้ค่า `PRE` หรือ `POST`
+`rateRole` ใช้ค่า `PARENT` หรือ `INSTRUCTOR`
+ปุ่ม `POST` จะเปิดให้ส่งแบบประเมินเมื่อเหลือครั้งเรียนไม่เกิน 1 ครั้ง หรือคอร์สจบแล้ว
 
 ## Connect Google Sheet
 

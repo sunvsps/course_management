@@ -108,8 +108,7 @@ def add_key_table(doc):
         ["LineProfiles", "lineProfileId", "UserLineProfiles.lineProfileId", "เก็บข้อมูลจาก LINE อัตโนมัติหลังผู้เรียน login"],
         ["Users", "userId", "Enrollments.userId", "รายชื่อผู้เรียน/ผู้ใช้หลักของระบบ"],
         ["Courses", "courseId", "Enrollments.courseId", "ข้อมูลคอร์ส เช่น รายครั้งหรือรายชั่วโมง"],
-        ["Enrollments", "enrollmentId", "Lessons / Attendances", "การซื้อคอร์สของผู้เรียน 1 คน ต่อ 1 คอร์ส"],
-        ["Lessons", "lessonId", "enrollmentId", "ตารางเรียนที่จะเกิดขึ้น"],
+        ["Enrollments", "enrollmentId", "Attendances / Assessments", "การซื้อคอร์สของผู้เรียน 1 คน ต่อ 1 คอร์ส"],
         ["Attendances", "attendanceId", "enrollmentId", "ประวัติการเข้าเรียนและจำนวนที่ใช้ไป"],
     ]
     table = doc.add_table(rows=len(rows), cols=len(rows[0]))
@@ -234,7 +233,7 @@ def add_checklist(doc):
             "Users.userId มีค่า และไม่ซ้ำ",
             "Enrollments.userId ตรงกับ Users.userId",
             "Enrollments.courseId ตรงกับ Courses.courseId",
-            "Lessons.enrollmentId และ Attendances.enrollmentId ตรงกับ Enrollments.enrollmentId",
+            "Attendances.enrollmentId และ Assessments.enrollmentId ตรงกับ Enrollments.enrollmentId",
             "courseType ใส่เป็น CLASS หรือ HOUR เท่านั้น",
             "status ใส่เป็น ACTIVE, PAUSED, COMPLETED หรือ CANCELLED เท่านั้น",
             "remainingClasses อัปเดตหลังเพิ่ม Attendances ทุกครั้ง",

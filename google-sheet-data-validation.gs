@@ -24,8 +24,8 @@ function setupCourseManagementDropdowns() {
   const users = requireSheet_(ss, "Users");
   const courses = requireSheet_(ss, "Courses");
   const enrollments = requireSheet_(ss, "Enrollments");
-  const lessons = requireSheet_(ss, "Lessons");
   const attendances = requireSheet_(ss, "Attendances");
+  const prePostAssessments = requireSheet_(ss, "PrePostAssessments");
 
   applyOptionalDropdownFromRange_(userLineProfiles, "userId", users, "userId");
   applyOptionalDropdownFromRange_(userLineProfiles, "lineProfileId", lineProfiles, "lineProfileId");
@@ -34,18 +34,20 @@ function setupCourseManagementDropdowns() {
   applyOptionalDropdownFromRange_(enrollments, "courseName", courses, "name");
   applyOptionalDropdownFromRange_(attendances, "userDisplayName", users, "displayName");
   applyOptionalDropdownFromRange_(attendances, "courseName", courses, "name");
+  applyOptionalDropdownFromRange_(prePostAssessments, "userLineProfileId", userLineProfiles, "userLineProfileId");
   clearOptionalValidation_(enrollments, "userId");
   clearOptionalValidation_(enrollments, "courseId");
   clearOptionalValidation_(enrollments, "instructorId");
-  clearOptionalValidation_(lessons, "enrollmentId");
   clearOptionalValidation_(attendances, "enrollmentId");
+  clearOptionalValidation_(prePostAssessments, "enrollmentId");
 
   applyDropdownList_(users, "role", ["STUDENT", "INSTRUCTOR", "ADMIN"]);
   applyDropdownList_(userLineProfiles, "relationship", ["father", "mother", "parent", "guardian"]);
   applyDropdownList_(userLineProfiles, "isPrimary", ["TRUE", "FALSE"]);
   applyDropdownList_(courses, "courseType", ["CLASS", "HOUR"]);
   applyDropdownList_(enrollments, "status", ["ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"]);
-  applyDropdownList_(lessons, "status", ["SCHEDULED", "CHECKED_IN", "CANCELLED"]);
+  applyDropdownList_(prePostAssessments, "assessmentType", ["PRE", "POST"]);
+  applyDropdownList_(prePostAssessments, "rateRole", ["PARENT", "INSTRUCTOR"]);
   applyOptionalDateValidation_(attendances, "checkedInAt");
 
   notify_("Dropdown setup completed.");
