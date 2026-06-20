@@ -264,10 +264,10 @@ function prePostAssessmentScoreChoice(name, label, lowLabel, highLabel) {
     <fieldset class="assessmentScoreChoice">
       <legend>
         <span>${escapeHtml(label)}</span>
-        <small>1 = ${escapeHtml(lowLabel)}, 5 = ${escapeHtml(highLabel)}</small>
+        <small>0 = ${escapeHtml(lowLabel)}, 5 = ${escapeHtml(highLabel)}</small>
       </legend>
       <div class="scoreScale compact" role="radiogroup" aria-label="${escapeHtml(label)}">
-        ${[1, 2, 3, 4, 5].map((score) => `
+        ${[0, 1, 2, 3, 4, 5].map((score) => `
           <label class="scoreOption">
             <input type="radio" name="${escapeHtml(name)}" value="${score}" required />
             <span>${score}</span>
@@ -369,7 +369,7 @@ function prePostAssessmentChart(enrollment) {
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const xFor = (index) => padding.left + (plotWidth / (prePostAssessmentScoreFields.length - 1)) * index;
-  const yFor = (score) => padding.top + plotHeight - ((score - 1) / 4) * plotHeight;
+  const yFor = (score) => padding.top + plotHeight - (Math.max(0, Math.min(5, score)) / 5) * plotHeight;
 
   return `
     <section class="assessmentChartPanel">
@@ -391,7 +391,7 @@ function prePostAssessmentChart(enrollment) {
       </div>
       <div class="assessmentChartScroller">
         <svg class="assessmentChart" viewBox="0 0 ${width} ${height}" role="img" aria-label="กราฟผลประเมิน pre และ post">
-          ${[1, 2, 3, 4, 5].map((score) => `
+          ${[0, 1, 2, 3, 4, 5].map((score) => `
             <line x1="${padding.left}" y1="${yFor(score)}" x2="${width - padding.right}" y2="${yFor(score)}" class="chartGridLine" />
             <text x="14" y="${yFor(score) + 4}" class="chartAxisText">${score}</text>
           `).join("")}
@@ -410,11 +410,25 @@ function prePostAssessmentChart(enrollment) {
             return `
               <polyline points="${points.map(({ x, y }) => `${x},${y}`).join(" ")}" fill="none" stroke="${item.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
               ${points.map(({ name, index, score, x, y }) => {
-                const [, fieldLabel, , , emoji] = prePostAssessmentScoreFields[index];
+                const [, fieldLabel, , , emoji, shortLabel] = prePostAssessmentScoreFields[index];
+                const parentScore = scoreTextValue(scoreValue(item.prePostAssessment.sources.parent?.[name]));
+                const teacherScore = scoreTextValue(scoreValue(item.prePostAssessment.sources.instructor?.[name]));
+                const tooltipX = x > width - 190 ? x - 176 : x + 12;
+                const tooltipY = y < 82 ? y + 14 : y - 76;
+                const tooltipLabel = `${emoji} ${shortLabel}`;
+                const ariaLabel = `${emoji} ${fieldLabel} ${item.label} ${formatNumber(score)}/5 ผู้ปกครอง ${parentScore} ครู ${teacherScore}`;
                 return `
-                  <circle class="assessmentPoint" cx="${x}" cy="${y}" r="5" fill="${item.color}" tabindex="0">
-                    <title>${escapeHtml(`${emoji} ${fieldLabel} | ${item.label}: ${formatNumber(score)}/5 | ผู้ปกครอง ${scoreTextValue(scoreValue(item.prePostAssessment.sources.parent?.[name]))} | ครู ${scoreTextValue(scoreValue(item.prePostAssessment.sources.instructor?.[name]))}`)}</title>
-                  </circle>
+                  <g class="assessmentPointGroup" tabindex="0" aria-label="${escapeHtml(ariaLabel)}">
+                    <circle class="assessmentPoint" cx="${x}" cy="${y}" r="5" fill="${item.color}"></circle>
+                    <g class="chartPointTooltip" transform="translate(${tooltipX} ${tooltipY})">
+                      <rect width="164" height="66" rx="8"></rect>
+                      <text x="10" y="18">
+                        <tspan class="tooltipTitle">${escapeHtml(tooltipLabel)}</tspan>
+                        <tspan x="10" dy="17">${escapeHtml(`${item.label}: ${formatNumber(score)}/5`)}</tspan>
+                        <tspan x="10" dy="17">${escapeHtml(`ผู้ปกครอง ${parentScore} | ครู ${teacherScore}`)}</tspan>
+                      </text>
+                    </g>
+                  </g>
                 `;
               }).join("")}
             `;
@@ -472,6 +486,18 @@ function assessmentCompareCard(item) {
           <span>Post</span>
           <div class="assessmentTrack"><i class="post" style="width:${postWidth}%"></i></div>
           <b>${escapeHtml(scoreTextValue(item.postScore))}</b>
+        </div>
+      </div>
+      <div class="assessmentSourceRows" aria-label="รายละเอียดคะแนนผู้ประเมิน">
+        <div>
+          <span>ผู้ปกครอง</span>
+          <b>Pre ${escapeHtml(scoreTextValue(item.preParentScore))}</b>
+          <b>Post ${escapeHtml(scoreTextValue(item.postParentScore))}</b>
+        </div>
+        <div>
+          <span>คุณครู</span>
+          <b>Pre ${escapeHtml(scoreTextValue(item.preTeacherScore))}</b>
+          <b>Post ${escapeHtml(scoreTextValue(item.postTeacherScore))}</b>
         </div>
       </div>
     </article>
