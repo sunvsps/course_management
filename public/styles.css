@@ -591,12 +591,46 @@ h2 {
   stroke-width: 2;
 }
 
-.assessmentPoint:hover,
-.assessmentPoint:focus {
+.assessmentPointGroup {
+  cursor: help;
+  outline: none;
+}
+
+.assessmentPointGroup:hover .assessmentPoint,
+.assessmentPointGroup:focus .assessmentPoint,
+.assessmentPointGroup:focus-visible .assessmentPoint {
   r: 8px;
   outline: none;
   stroke: #17202a;
   stroke-width: 2;
+}
+
+.chartPointTooltip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.chartPointTooltip rect {
+  fill: #17202a;
+  filter: drop-shadow(0 8px 18px rgba(23, 32, 42, 0.22));
+}
+
+.chartPointTooltip text {
+  fill: #ffffff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.chartPointTooltip .tooltipTitle {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.assessmentPointGroup:hover .chartPointTooltip,
+.assessmentPointGroup:focus .chartPointTooltip,
+.assessmentPointGroup:focus-visible .chartPointTooltip {
+  opacity: 1;
 }
 
 .assessmentCompareGrid {
@@ -683,6 +717,36 @@ h2 {
 .assessmentBarRows {
   display: grid;
   gap: 6px;
+}
+
+.assessmentSourceRows {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid #e7edf2;
+  padding-top: 8px;
+}
+
+.assessmentSourceRows div {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  color: #6c7a89;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.assessmentSourceRows span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assessmentSourceRows b {
+  color: #405261;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .assessmentBarRow {
@@ -790,7 +854,13 @@ h2 {
 }
 
 .scoreScale.compact .scoreOption span {
-  min-height: 34px;
+  min-height: 42px;
+  font-size: 15px;
+}
+
+.scoreScale.compact {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
 }
 
 .assessmentNote {
@@ -817,7 +887,7 @@ h2 {
 }
 
 button {
-  min-height: 40px;
+  min-height: 44px;
   border: 0;
   border-radius: 8px;
   background: #17202a;
@@ -901,7 +971,7 @@ button.secondary {
 }
 
 .teacherViewButton {
-  min-height: 42px;
+  min-height: 48px;
   border-color: transparent;
   background: transparent;
   color: #4d5965;
@@ -991,7 +1061,7 @@ button.secondary {
 .checkinForm select,
 .checkinForm textarea {
   width: 100%;
-  min-height: 40px;
+  min-height: 46px;
   border: 1px solid #cfd9e1;
   border-radius: 8px;
   background: #ffffff;
@@ -1202,7 +1272,7 @@ button.secondary {
 .scoreOption span {
   display: grid;
   place-items: center;
-  min-height: 36px;
+  min-height: 42px;
   border: 1px solid #cfd9e1;
   border-radius: 8px;
   background: #ffffff;
@@ -1499,9 +1569,86 @@ button.secondary {
   border-radius: 8px;
 }
 
+@media (max-width: 1024px) {
+  .shell {
+    width: min(100%, 860px);
+    padding: 18px;
+  }
+
+  .topbar {
+    align-items: stretch;
+  }
+
+  .teacherViewNav {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    margin: 0 -2px 14px;
+  }
+
+  .checkinForm {
+    gap: 16px;
+  }
+
+  .checkinHeader {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .checkinHeader h2 {
+    font-size: 22px;
+  }
+
+  .checkinClassGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .checkinWide,
+  .courseUsagePanel {
+    grid-column: 1 / -1;
+  }
+
+  .courseUsagePanel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .scoreGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreGroup {
+    padding: 14px;
+  }
+
+  .scoreOption span {
+    min-height: 46px;
+  }
+
+  .courseRail {
+    grid-auto-columns: minmax(280px, 46%);
+  }
+
+  .assessmentSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .assessmentSummaryCard:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .assessmentCompareGrid,
+  .assessmentScoreGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .assessmentPanel {
+    width: min(720px, 100%);
+  }
+}
+
 @media (max-width: 640px) {
   .shell {
-    padding: 14px;
+    padding: 12px;
   }
 
   .adminShell {
@@ -1533,6 +1680,10 @@ button.secondary {
   .checkinFooter {
     align-items: stretch;
     flex-direction: column-reverse;
+    margin-right: -12px;
+    margin-left: -12px;
+    padding-right: 12px;
+    padding-left: 12px;
   }
 
   .checkinFooter button {
@@ -1562,7 +1713,7 @@ button.secondary {
   }
 
   .courseRail {
-    grid-auto-columns: minmax(260px, 88%);
+    grid-auto-columns: minmax(248px, 88%);
     padding: 2px 2px 12px;
     scroll-padding-inline: 2px;
   }
@@ -1636,6 +1787,10 @@ button.secondary {
     grid-template-columns: 1fr;
   }
 
+  .assessmentSummaryCard:last-child {
+    grid-column: auto;
+  }
+
   .assessmentChartHeader,
   .assessmentPanelHeader {
     flex-direction: column;
@@ -1651,9 +1806,45 @@ button.secondary {
     white-space: normal;
   }
 
+  .assessmentSourceRows div {
+    grid-template-columns: 1fr auto auto;
+  }
+
   .assessmentPanel {
-    max-height: calc(100vh - 28px);
-    padding: 14px;
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 12px;
+  }
+
+  .assessmentOverlay {
+    padding: 12px;
+    align-items: start;
+  }
+
+  .scoreScale.compact {
+    grid-template-columns: repeat(6, minmax(36px, 1fr));
+    gap: 4px;
+  }
+
+  .scoreScale.compact .scoreOption span {
+    min-height: 44px;
+  }
+
+  .assessmentSourceRows div {
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .assessmentScoreChoice {
+    padding: 10px;
+  }
+
+  .scoreScale.compact {
+    grid-template-columns: repeat(6, minmax(38px, 1fr));
+    gap: 4px;
+  }
+
+  .scoreScale.compact .scoreOption span {
+    min-height: 44px;
   }
 
   .assessmentSubmitRow {
