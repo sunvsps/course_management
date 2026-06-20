@@ -264,10 +264,10 @@ function prePostAssessmentScoreChoice(name, label, lowLabel, highLabel) {
     <fieldset class="assessmentScoreChoice">
       <legend>
         <span>${escapeHtml(label)}</span>
-        <small>1 = ${escapeHtml(lowLabel)}, 5 = ${escapeHtml(highLabel)}</small>
+        <small>0 = ${escapeHtml(lowLabel)}, 5 = ${escapeHtml(highLabel)}</small>
       </legend>
       <div class="scoreScale compact" role="radiogroup" aria-label="${escapeHtml(label)}">
-        ${[1, 2, 3, 4, 5].map((score) => `
+        ${[0, 1, 2, 3, 4, 5].map((score) => `
           <label class="scoreOption">
             <input type="radio" name="${escapeHtml(name)}" value="${score}" required />
             <span>${score}</span>
@@ -369,7 +369,7 @@ function prePostAssessmentChart(enrollment) {
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const xFor = (index) => padding.left + (plotWidth / (prePostAssessmentScoreFields.length - 1)) * index;
-  const yFor = (score) => padding.top + plotHeight - ((score - 1) / 4) * plotHeight;
+  const yFor = (score) => padding.top + plotHeight - (Math.max(0, Math.min(5, score)) / 5) * plotHeight;
 
   return `
     <section class="assessmentChartPanel">
@@ -391,7 +391,7 @@ function prePostAssessmentChart(enrollment) {
       </div>
       <div class="assessmentChartScroller">
         <svg class="assessmentChart" viewBox="0 0 ${width} ${height}" role="img" aria-label="กราฟผลประเมิน pre และ post">
-          ${[1, 2, 3, 4, 5].map((score) => `
+          ${[0, 1, 2, 3, 4, 5].map((score) => `
             <line x1="${padding.left}" y1="${yFor(score)}" x2="${width - padding.right}" y2="${yFor(score)}" class="chartGridLine" />
             <text x="14" y="${yFor(score) + 4}" class="chartAxisText">${score}</text>
           `).join("")}
@@ -472,6 +472,18 @@ function assessmentCompareCard(item) {
           <span>Post</span>
           <div class="assessmentTrack"><i class="post" style="width:${postWidth}%"></i></div>
           <b>${escapeHtml(scoreTextValue(item.postScore))}</b>
+        </div>
+      </div>
+      <div class="assessmentSourceRows" aria-label="รายละเอียดคะแนนผู้ประเมิน">
+        <div>
+          <span>ผู้ปกครอง</span>
+          <b>Pre ${escapeHtml(scoreTextValue(item.preParentScore))}</b>
+          <b>Post ${escapeHtml(scoreTextValue(item.postParentScore))}</b>
+        </div>
+        <div>
+          <span>คุณครู</span>
+          <b>Pre ${escapeHtml(scoreTextValue(item.preTeacherScore))}</b>
+          <b>Post ${escapeHtml(scoreTextValue(item.postTeacherScore))}</b>
         </div>
       </div>
     </article>
